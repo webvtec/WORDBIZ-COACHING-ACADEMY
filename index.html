@@ -52,11 +52,52 @@
             cursor: pointer;
         }
 
+        .menu-icon:hover span {
+            background: #ffd700;
+        }
+
         .menu-icon span {
             width: 30px;
             height: 4px;
             background: white;
             border-radius: 2px;
+        }
+
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: -300px;
+            width: 300px;
+            height: 100vh;
+            background: #0a2f4d;
+            transition: left 0.3s;
+            z-index: 2000;
+            overflow-y: auto;
+        }
+
+        .sidebar.open {
+            left: 0;
+        }
+
+        .sidebar-header {
+            padding: 20px;
+            background: #0d3b66;
+            color: white;
+            font-size: 1.5rem;
+            font-weight: bold;
+            border-bottom: 2px solid rgba(255,255,255,0.2);
+        }
+
+        .sidebar-item {
+            padding: 18px 25px;
+            color: white;
+            font-size: 1.1rem;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            cursor: pointer;
+        }
+
+        .sidebar-item:hover {
+            background: rgba(255,255,255,0.1);
         }
 
         .logo {
@@ -99,13 +140,55 @@
             white-space: nowrap;
             flex: 1;
         }
+
+        .overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0,0,0,0.5);
+            z-index: 1999;
+        }
+
+        .overlay.active {
+            display: block;
+        }
     </style>
+    <script>
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('overlay');
+            sidebar.classList.toggle('open');
+            overlay.classList.toggle('active');
+        }
+    </script>
 </head>
 <body>
+    <div class="overlay" id="overlay" onclick="toggleSidebar()"></div>
+    
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-header">MENU</div>
+        <div class="sidebar-item">Home</div>
+        <div class="sidebar-item">Live Quiz</div>
+        <div class="sidebar-item">Tournaments</div>
+        <div class="sidebar-item">Live Spelling</div>
+        <div class="sidebar-item">Student Dashboard</div>
+        <div class="sidebar-item">Coach Dashboard</div>
+        <div class="sidebar-item">Word Database</div>
+        <div class="sidebar-item">Leaderboards</div>
+        <div class="sidebar-item">Coach Directory</div>
+        <div class="sidebar-item">About Us</div>
+        <div class="sidebar-item">Contact Us</div>
+        <div class="sidebar-item">Settings</div>
+        <div class="sidebar-item">Sign Out</div>
+    </div>
+
     <header class="header">
         <div class="top-bar">
             <div class="left-section">
-                <div class="menu-icon">
+                <div class="menu-icon" onclick="toggleSidebar()">
                     <span></span>
                     <span></span>
                     <span></span>
@@ -121,4 +204,4 @@
         </nav>
     </header>
 </body>
-  </html>
+</html>
