@@ -794,14 +794,15 @@ function initializeAlphabet() {
     });
 }
 
+
 // ===== LOAD COMPLETE DICTIONARY WORD LIST =====
 async function loadWords() {
     try {
         document.getElementById('statusMessage').innerHTML = 
             `⏳ Loading comprehensive dictionary... Please wait.`;
         
-        // ENABLE WEB Dictionary - comprehensive English dictionary word list
-        const response = await fetch('https://raw.githubusercontent.com/elasticdog/yawl/master/yawl-0.3.2.03/word.list');
+        // Dictionary - comprehensive English dictionary word list
+        const response = await fetch('https://raw.githubusercontent.com/MarcinMoskala/english-words-database/master/english-words.txt');
         
         if (!response.ok) throw new Error('Failed to load words');
         
@@ -809,9 +810,8 @@ async function loadWords() {
         allWords = text.split('\n')
             .map(word => word.trim().toLowerCase())
             .filter(word => 
-                word.length > 1 && 
-                /^[a-z]+$/.test(word) && // Only letters
-                /[aeiou]/.test(word) // Must have vowels
+                word.length > 0 && 
+                /^[a-z]+$/.test(word) // Only letters, no numbers/symbols
             )
             .sort();
         
