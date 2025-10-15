@@ -736,7 +736,8 @@
             });
         });
 
-   // ===== NAVIGATION =====
+  
+// ===== NAVIGATION =====
 function navigateTo(section) {
     // Hide all sections
     document.querySelectorAll('.content-section').forEach(sec => {
@@ -750,19 +751,27 @@ function navigateTo(section) {
         targetSection.classList.add('active');
     }
 
-    // Load ALL words when navigating to word database
+    // Load words when navigating to word database
     if (section === 'word-database') {
         if (allWords.length === 0) {
-            loadWords();
+            loadWords().then(() => {
+                // Show first 100 words by default after loading
+                displayWords(allWords.slice(0, 100));
+                document.getElementById('statusMessage').innerHTML = 
+                    `✅ ${allWords.length.toLocaleString()} words loaded! Showing first 100. Select a letter to filter or search for specific words.`;
+            });
         } else {
-            // Display all words immediately
-            displayWords(allWords);
+            // Show first 100 words if already loaded
+            displayWords(allWords.slice(0, 100));
+            document.getElementById('statusMessage').innerHTML = 
+                `✅ ${allWords.length.toLocaleString()} words loaded! Showing first 100. Select a letter to filter or search for specific words.`;
         }
     }
 
     // Close sidebar
     toggleSidebar();
 }
+   
         // ===== SIDEBAR TOGGLE =====
         function toggleSidebar() {
             const sidebar = document.getElementById('sidebar');
@@ -786,25 +795,24 @@ function navigateTo(section) {
         }
 
         // ===== LOAD WORDS FROM FILE =====
-        async function loadWords() {
-            try {
-                const response = await fetch('https://raw.githubusercontent.com/dwyl/english-words/master/words_alpha.txt');
-                
-                if (!response.ok) throw new Error('Failed to load words');
-                
-                const text = await response.text();
-                allWords = text.split('\n').map(word => word.trim()).filter(word => word.length > 0);
-                
-                document.getElementById('statusMessage').innerHTML = 
-                    `✅ ${allWords.length.toLocaleString()} words loaded successfully! Select a letter to browse or search for a word.`;
-                
-                console.log(`Loaded ${allWords.length} words`);
-            } catch (error) {
-                console.error('Error loading words:', error);
-                document.getElementById('statusMessage').innerHTML = 
-                    `❌ Error loading word database. Please refresh the page to try again.`;
-            }
-        }
+async function loadWords() {
+    try {
+        const response = await fetch('https://raw.githubusercontent.com/dwyl/english-words/master/words_alpha.txt');
+        
+        if (!response.ok) throw new Error('Failed to load words');
+        
+        const text = await response.text();
+        allWords = text.split('\n').map(word => word.trim()).filter(word => word.length > 0);
+        
+        console.log(`Loaded ${allWords.length} words`);
+        return Promise.resolve();
+    } catch (error) {
+        console.error('Error loading words:', error);
+        document.getElementById('statusMessage').innerHTML = 
+            `❌ Error loading word database. Please refresh the page to try again.`;
+        return Promise.reject(error);
+    }
+}
 
         // ===== FILTER WORDS BY LETTER =====
         function filterByLetter(letter) {
