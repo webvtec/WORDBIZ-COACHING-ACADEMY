@@ -736,18 +736,27 @@
         });
 
         // ===== NAVIGATION =====
-        function navigateTo(section) {
-            // Hide all sections
-            document.querySelectorAll('.content-section').forEach(sec => {
-                sec.classList.remove('active');
-            });
+function navigateTo(section) {
+    // Hide all sections
+    document.querySelectorAll('.content-section').forEach(sec => {
+        sec.classList.remove('active');
+    });
 
-            // Show selected section
-            const sectionId = section + '-section';
-            const targetSection = document.getElementById(sectionId);
-            if (targetSection) {
-                targetSection.classList.add('active');
-            }
+    // Show selected section
+    const sectionId = section + '-section';
+    const targetSection = document.getElementById(sectionId);
+    if (targetSection) {
+        targetSection.classList.add('active');
+    }
+
+    // Reload words if navigating to word database and words haven't loaded
+    if (section === 'word-database' && allWords.length === 0) {
+        loadWords();
+    }
+
+    // Close sidebar
+    toggleSidebar();
+}
 
             // Close sidebar
             toggleSidebar();
