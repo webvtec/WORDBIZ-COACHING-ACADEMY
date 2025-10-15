@@ -816,8 +816,7 @@ async function loadWords() {
             `⏳ Loading word database... Please wait.`;
         
         // This list contains ~466k real English words - most comprehensive single source
-        const response = await fetch('https://raw.githubusercontent.com/palabras/en-us-hunspell-dict/master/words');
-        
+        const response = await fetch('https://raw.githubusercontent.com/redbo/scrabble/master/dictionary.txt');
         if (!response.ok) throw new Error('Failed to load words');
         
         const text = await response.text();
