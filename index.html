@@ -1,6 +1,15 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script>
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        const auth = firebase.auth();
+    </script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>WordBiz Coaching Academy</title>
@@ -14,12 +23,14 @@
         body {
             font-family: Georgia, 'Times New Roman', serif;
             overflow-x: hidden;
+            background: #f5f5f5;
         }
         
         html {
             overflow-x: hidden;
         }
 
+        /* ===== HEADER STYLES ===== */
         .header {
             background: #0d3b66;
             position: sticky;
@@ -63,6 +74,40 @@
             border-radius: 2px;
         }
 
+        .logo {
+            font-size: 1.6rem;
+            font-weight: bold;
+            font-style: italic;
+            color: white;
+            letter-spacing: 2px;
+            white-space: nowrap;
+        }
+
+        .nav-bar {
+            display: flex;
+            background: #0a2f4d;
+            justify-content: space-evenly;
+            width: 100%;
+        }
+
+        .nav-item {
+            padding: 14px 15px;
+            text-align: center;
+            color: white;
+            font-size: 1.1rem;
+            font-weight: bold;
+            font-style: italic;
+            letter-spacing: 1.2px;
+            cursor: pointer;
+            white-space: nowrap;
+            flex: 1;
+        }
+
+        .nav-item:hover {
+            background: rgba(255,255,255,0.1);
+        }
+
+        /* ===== SIDEBAR STYLES ===== */
         .sidebar {
             position: fixed;
             top: 0;
@@ -100,45 +145,13 @@
             background: rgba(255,255,255,0.1);
         }
 
-        .logo {
-            font-size: 1.6rem;
+        .sidebar-item.sign-in {
+            background: #0d3b66;
             font-weight: bold;
             font-style: italic;
-            color: white;
-            letter-spacing: 2px;
-            white-space: nowrap;
-        }
-
-        .sign-in {
-            font-size: 1.3rem;
-            font-weight: bold;
-            font-style: italic;
-            color: white;
             letter-spacing: 1.5px;
-            cursor: pointer;
-            white-space: nowrap;
-            margin-left: auto;
-            padding-left: 30px;
-        }
-
-        .nav-bar {
-            display: flex;
-            background: #0a2f4d;
-            justify-content: space-evenly;
-            width: 100%;
-        }
-
-        .nav-item {
-            padding: 14px 15px;
             text-align: center;
-            color: white;
-            font-size: 1.1rem;
-            font-weight: bold;
-            font-style: italic;
-            letter-spacing: 1.2px;
-            cursor: pointer;
-            white-space: nowrap;
-            flex: 1;
+            margin-top: 10px;
         }
 
         .overlay {
@@ -155,19 +168,405 @@
         .overlay.active {
             display: block;
         }
-    </style>
-    <script>
-        function toggleSidebar() {
-            const sidebar = document.getElementById('sidebar');
-            const overlay = document.getElementById('overlay');
-            sidebar.classList.toggle('open');
-            overlay.classList.toggle('active');
+
+        /* ===== MAIN CONTENT STYLES ===== */
+        .container {
+            max-width: 1200px;
+            margin: 30px auto;
+            padding: 0 20px;
         }
-    </script>
+
+        .welcome-section {
+            background: white;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .welcome-section h1 {
+            color: #0d3b66;
+            font-size: 2.5rem;
+            margin-bottom: 15px;
+        }
+
+        .welcome-section p {
+            color: #666;
+            font-size: 1.2rem;
+            line-height: 1.6;
+        }
+
+        /* ===== WORD DATABASE SECTION ===== */
+        .word-database {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .database-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .database-header h2 {
+            color: #0d3b66;
+            font-size: 2rem;
+        }
+
+        .search-box {
+            display: flex;
+            gap: 10px;
+            flex: 1;
+            max-width: 400px;
+        }
+
+        .search-box input {
+            flex: 1;
+            padding: 12px 15px;
+            border: 2px solid #0d3b66;
+            border-radius: 5px;
+            font-size: 1rem;
+            font-family: Georgia, serif;
+        }
+
+        .search-box button {
+            padding: 12px 25px;
+            background: #0d3b66;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-weight: bold;
+            cursor: pointer;
+            font-family: Georgia, serif;
+        }
+
+        .search-box button:hover {
+            background: #0a2f4d;
+        }
+
+        /* ===== ALPHABET NAVIGATION ===== */
+        .alphabet-nav {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 25px;
+            justify-content: center;
+        }
+
+        .letter-btn {
+            width: 40px;
+            height: 40px;
+            background: #0d3b66;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            font-family: Georgia, serif;
+        }
+
+        .letter-btn:hover {
+            background: #ffd700;
+            color: #0d3b66;
+        }
+
+        .letter-btn.active {
+            background: #ffd700;
+            color: #0d3b66;
+        }
+
+        /* ===== LOADING & STATUS ===== */
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+            font-size: 1.2rem;
+        }
+
+        .status-message {
+            padding: 15px;
+            background: #e3f2fd;
+            border-left: 4px solid #0d3b66;
+            margin-bottom: 20px;
+            border-radius: 5px;
+        }
+
+        /* ===== WORD CARD STYLES ===== */
+        .word-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .word-card {
+            background: #f9f9f9;
+            border: 2px solid #0d3b66;
+            border-radius: 8px;
+            padding: 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .word-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .word-title {
+            font-size: 1.8rem;
+            color: #0d3b66;
+            font-weight: bold;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .word-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .icon-btn {
+            background: #0d3b66;
+            color: white;
+            border: none;
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 1.2rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .icon-btn:hover {
+            background: #ffd700;
+            color: #0d3b66;
+        }
+
+        .word-phonetic {
+            color: #666;
+            font-style: italic;
+            margin-bottom: 10px;
+        }
+
+        .word-pos {
+            display: inline-block;
+            background: #0d3b66;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 15px;
+            font-size: 0.9rem;
+            margin-bottom: 10px;
+        }
+
+        .word-definition {
+            color: #333;
+            line-height: 1.6;
+            margin: 10px 0;
+        }
+
+        .word-example {
+            background: #e3f2fd;
+            padding: 10px;
+            border-left: 3px solid #0d3b66;
+            font-style: italic;
+            color: #555;
+            margin-top: 10px;
+        }
+
+        /* ===== WORD DETAIL MODAL ===== */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            z-index: 3000;
+            overflow-y: auto;
+        }
+
+        .modal.active {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 10px;
+            max-width: 700px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        .modal-header {
+            background: #0d3b66;
+            color: white;
+            padding: 25px;
+            border-radius: 10px 10px 0 0;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .modal-title {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            background: none;
+            border: none;
+            color: white;
+            font-size: 2rem;
+            cursor: pointer;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-close:hover {
+            background: rgba(255,255,255,0.2);
+            border-radius: 50%;
+        }
+
+        .modal-body {
+            padding: 30px;
+        }
+
+        .practice-section {
+            background: #f5f5f5;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            text-align: center;
+        }
+
+        .practice-btn {
+            padding: 15px 30px;
+            background: #0d3b66;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            margin: 5px;
+            font-family: Georgia, serif;
+        }
+
+        .practice-btn:hover {
+            background: #ffd700;
+            color: #0d3b66;
+        }
+
+        .practice-btn.listening {
+            background: #ff6b6b;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .feedback {
+            margin-top: 15px;
+            padding: 15px;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+
+        .feedback.success {
+            background: #d4edda;
+            color: #155724;
+            border: 2px solid #c3e6cb;
+        }
+
+        .feedback.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 2px solid #f5c6cb;
+        }
+
+        .example-list {
+            margin-top: 15px;
+        }
+
+        .example-item {
+            background: #e3f2fd;
+            padding: 15px;
+            border-left: 4px solid #0d3b66;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+
+        .next-example-btn {
+            margin-top: 15px;
+            padding: 10px 20px;
+            background: #0a2f4d;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-family: Georgia, serif;
+        }
+
+        .next-example-btn:hover {
+            background: #0d3b66;
+        }
+
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 768px) {
+            .logo {
+                font-size: 1.2rem;
+            }
+
+            .welcome-section h1 {
+                font-size: 2rem;
+            }
+
+            .word-list {
+                grid-template-columns: 1fr;
+            }
+
+            .database-header {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .search-box {
+                max-width: 100%;
+            }
+        }
+    </style>
 </head>
 <body>
+    <!-- Overlay -->
     <div class="overlay" id="overlay" onclick="toggleSidebar()"></div>
     
+    <!-- Sidebar -->
     <div class="sidebar" id="sidebar">
         <div class="sidebar-header">MENU</div>
         <div class="sidebar-item">Home</div>
@@ -177,8 +576,10 @@
         <div class="sidebar-item">Leaderboards</div>
         <div class="sidebar-item">About Us</div>
         <div class="sidebar-item">Settings</div>
+        <div class="sidebar-item sign-in">SIGN IN</div>
     </div>
 
+    <!-- Header -->
     <header class="header">
         <div class="top-bar">
             <div class="left-section">
@@ -189,7 +590,6 @@
                 </div>
                 <div class="logo">WORDBIZ COACHING ACADEMY</div>
             </div>
-            <div class="sign-in">SIGN IN</div>
         </div>
         <nav class="nav-bar">
             <div class="nav-item">QUIZ</div>
@@ -197,5 +597,466 @@
             <div class="nav-item">SPELLING</div>
         </nav>
     </header>
+
+    <!-- Main Content -->
+    <div class="container">
+        <!-- Welcome Section -->
+        <div class="welcome-section">
+            <h1>Welcome to WordBiz Coaching Academy</h1>
+            <p>Master over 370,000 English words with pronunciation practice and intelligent learning tools.</p>
+        </div>
+
+        <!-- Word Database Section -->
+        <div class="word-database">
+            <div class="database-header">
+                <h2>📚 Word Database</h2>
+                <div class="search-box">
+                    <input type="text" id="searchInput" placeholder="Search for any word..." />
+                    <button onclick="searchWord()">Search</button>
+                </div>
+            </div>
+
+            <div class="status-message" id="statusMessage">
+                Loading word database... Please wait.
+            </div>
+
+            <!-- Alphabet Navigation -->
+            <div class="alphabet-nav" id="alphabetNav">
+                <!-- Will be generated by JavaScript -->
+            </div>
+
+            <!-- Word List -->
+            <div class="word-list" id="wordList">
+                <div class="loading">Select a letter or search for a word to begin</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Word Detail Modal -->
+    <div class="modal" id="wordModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title" id="modalWord">Word</h2>
+                <button class="modal-close" onclick="closeModal()">×</button>
+                <div class="word-phonetic" id="modalPhonetic"></div>
+            </div>
+            <div class="modal-body">
+                <div id="modalContent">
+                    <!-- Content loaded dynamically -->
+                </div>
+                <div class="practice-section">
+                    <h3>🎤 Practice Pronunciation</h3>
+                    <button class="practice-btn" onclick="speakWord()">🔊 Listen</button>
+                    <button class="practice-btn" id="practiceBtn" onclick="startPractice()">🎤 Practice Speaking</button>
+                    <div id="practiceFeedback"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript -->
+    <script>
+
+        // ===== FIREBASE CONFIGURATION =====
+        const firebaseConfig = {
+            apiKey: "AIzaSyCDdnDKsCUaCK4L95G57AC9-BjCqJiIywA",
+            authDomain: "wordbiz-coaching-academy.firebaseapp.com",
+            projectId: "wordbiz-coaching-academy",
+            storageBucket: "wordbiz-coaching-academy.firebasestorage.app",
+            messagingSenderId: "829294789081",
+            appId: "1:829294789081:web:501ae4d3d6f3694a40d9c8"
+        };
+
+        // ===== GLOBAL VARIABLES =====
+        let allWords = [];
+        let currentLetter = '';
+        let currentWord = null;
+        let currentExampleIndex = 0;
+        let isListening = false;
+        let recognition = null;
+
+        // ===== INITIALIZE =====
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeAlphabet();
+            loadWords();
+            initializeSpeechRecognition();
+        });
+
+        // ===== SIDEBAR TOGGLE =====
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('overlay');
+            sidebar.classList.toggle('open');
+            overlay.classList.toggle('active');
+        }
+
+        // ===== INITIALIZE ALPHABET NAVIGATION =====
+        function initializeAlphabet() {
+            const alphabetNav = document.getElementById('alphabetNav');
+            const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+            
+            letters.forEach(letter => {
+                const btn = document.createElement('button');
+                btn.className = 'letter-btn';
+                btn.textContent = letter;
+                btn.onclick = () => filterByLetter(letter);
+                alphabetNav.appendChild(btn);
+            });
+        }
+
+        // ===== LOAD WORDS FROM FILE =====
+        async function loadWords() {
+            try {
+                const response = await fetch('data/words.txt');
+                if (!response.ok) throw new Error('Failed to load words');
+                
+                const text = await response.text();
+                allWords = text.split('\n').map(word => word.trim()).filter(word => word.length > 0);
+                
+                document.getElementById('statusMessage').innerHTML = 
+                    `✅ ${allWords.length.toLocaleString()} words loaded successfully! Select a letter to browse or search for a word.`;
+                
+                console.log(`Loaded ${allWords.length} words`);
+            } catch (error) {
+                console.error('Error loading words:', error);
+                document.getElementById('statusMessage').innerHTML = 
+                    `❌ Error loading word database. Please make sure data/words.txt exists.`;
+            }
+        }
+
+        // ===== FILTER WORDS BY LETTER =====
+        function filterByLetter(letter) {
+            currentLetter = letter;
+            
+            // Update active button
+            document.querySelectorAll('.letter-btn').forEach(btn => {
+                btn.classList.remove('active');
+                if (btn.textContent === letter) {
+                    btn.classList.add('active');
+                }
+            });
+
+            const filteredWords = allWords.filter(word => 
+                word.toLowerCase().startsWith(letter.toLowerCase())
+            ).slice(0, 50); // Show first 50 words
+
+            displayWords(filteredWords);
+        }
+
+        // ===== SEARCH WORD =====
+        function searchWord() {
+            const searchTerm = document.getElementById('searchInput').value.trim().toLowerCase();
+            
+            if (!searchTerm) {
+                alert('Please enter a word to search');
+                return;
+            }
+
+            const exactMatch = allWords.find(word => word.toLowerCase() === searchTerm);
+            
+            if (exactMatch) {
+                showWordDetail(exactMatch);
+            } else {
+                const partialMatches = allWords.filter(word => 
+                    word.toLowerCase().includes(searchTerm)
+                ).slice(0, 50);
+
+                if (partialMatches.length > 0) {
+                    displayWords(partialMatches);
+                } else {
+                    alert(`No words found matching "${searchTerm}"`);
+                }
+            }
+        }
+
+        // Add enter key support for search
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('searchInput').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    searchWord();
+                }
+            });
+        });
+
+        // ===== DISPLAY WORDS =====
+        function displayWords(words) {
+            const wordList = document.getElementById('wordList');
+            
+            if (words.length === 0) {
+                wordList.innerHTML = '<div class="loading">No words found</div>';
+                return;
+            }
+
+            wordList.innerHTML = words.map(word => `
+                <div class="word-card" onclick="showWordDetail('${word}')">
+                    <div class="word-title">
+                        <span>${word}</span>
+                        <div class="word-actions">
+                            <button class="icon-btn" onclick="event.stopPropagation(); speakWordQuick('${word}')">🔊</button>
+                        </div>
+                    </div>
+                    <div class="word-definition">Click to see definition and practice pronunciation</div>
+                </div>
+            `).join('');
+        }
+
+        // ===== SHOW WORD DETAIL =====
+        async function showWordDetail(word) {
+            currentWord = word;
+            currentExampleIndex = 0;
+            
+            const modal = document.getElementById('wordModal');
+            document.getElementById('modalWord').textContent = word;
+            document.getElementById('modalPhonetic').textContent = 'Loading...';
+            document.getElementById('modalContent').innerHTML = '<div class="loading">Fetching word details...</div>';
+            
+            modal.classList.add('active');
+
+            // Fetch word details from Free Dictionary API
+            try {
+                const response = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${word}`);
+                
+                if (!response.ok) {
+                    throw new Error('Word not found in dictionary');
+                }
+
+                const data = await response.json();
+                displayWordDetails(data[0]);
+            } catch (error) {
+                document.getElementById('modalContent').innerHTML = `
+                    <div class="word-definition">
+                        <strong>Word:</strong> ${word}<br><br>
+                        Unable to fetch detailed definition from dictionary API.<br>
+                        You can still practice pronunciation using the buttons below.
+                    </div>
+                `;
+                document.getElementById('modalPhonetic').textContent = '';
+            }
+        }
+
+        // ===== DISPLAY WORD DETAILS =====
+        function displayWordDetails(wordData) {
+            const phonetic = wordData.phonetic || wordData.phonetics?.[0]?.text || '';
+            document.getElementById('modalPhonetic').textContent = phonetic;
+
+            let html = '';
+
+            wordData.meanings.forEach(meaning => {
+                html += `
+                    <div style="margin-bottom: 25px;">
+                        <span class="word-pos">${meaning.partOfSpeech}</span>
+                        <div class="word-definition">
+                            <strong>Definition:</strong> ${meaning.definitions[0].definition}
+                        </div>
+                `;
+
+                if (meaning.definitions[0].example) {
+                    html += `
+                        <div class="word-example">
+                            <strong>Example:</strong> "${meaning.definitions[0].example}"
+                        </div>
+                    `;
+                }
+
+                // Store all examples for "Next Example" feature
+                if (meaning.definitions.length > 1) {
+                    html += `
+                        <button class="next-example-btn" onclick="showNextExample('${meaning.partOfSpeech}')">
+                            📖 Show More Examples
+                        </button>
+                        <div id="extraExamples-${meaning.partOfSpeech}" class="example-list" style="display:none;">
+                    `;
+
+                    meaning.definitions.slice(1).forEach(def => {
+                        if (def.example) {
+                            html += `
+                                <div class="example-item">
+                                    <strong>Definition:</strong> ${def.definition}<br>
+                                    <strong>Example:</strong> "${def.example}"
+                                </div>
+                            `;
+                        }
+                    });
+
+                    html += '</div>';
+                }
+
+                html += '</div>';
+            });
+
+            document.getElementById('modalContent').innerHTML = html;
+        }
+
+        // ===== SHOW NEXT EXAMPLE =====
+        function showNextExample(pos) {
+            const extraExamples = document.getElementById(`extraExamples-${pos}`);
+            if (extraExamples) {
+                extraExamples.style.display = extraExamples.style.display === 'none' ? 'block' : 'none';
+            }
+        }
+
+        // ===== CLOSE MODAL =====
+        function closeModal() {
+            document.getElementById('wordModal').classList.remove('active');
+            document.getElementById('practiceFeedback').innerHTML = '';
+        }
+
+        // ===== TEXT-TO-SPEECH =====
+        function speakWord() {
+            if (!currentWord) return;
+            
+            const utterance = new SpeechSynthesisUtterance(currentWord);
+            utterance.rate = 0.8;
+            utterance.pitch = 1;
+            utterance.volume = 1;
+            
+            window.speechSynthesis.cancel();
+            window.speechSynthesis.speak(utterance);
+        }
+
+        function speakWordQuick(word) {
+            const utterance = new SpeechSynthesisUtterance(word);
+            utterance.rate = 0.8;
+            window.speechSynthesis.speak(utterance);
+        }
+
+        // ===== SPEECH RECOGNITION =====
+        function initializeSpeechRecognition() {
+            if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+                const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+                recognition = new SpeechRecognition();
+                recognition.continuous = false;
+                recognition.interimResults = false;
+                recognition.lang = 'en-US';
+
+                recognition.onresult = function(event) {
+                    const transcript = event.results[0][0].transcript.toLowerCase().trim();
+                    checkPronunciation(transcript);
+                };
+
+                recognition.onerror = function(event) {
+                    isListening = false;
+                    document.getElementById('practiceBtn').classList.remove('listening');
+                    document.getElementById('practiceFeedback').innerHTML = `
+                        <div class="feedback error">
+                            ❌ Error: ${event.error}. Please try again.
+                        </div>
+                    `;
+                };
+
+                recognition.onend = function() {
+                    isListening = false;
+                    document.getElementById('practiceBtn').classList.remove('listening');
+                    document.getElementById('practiceBtn').textContent = '🎤 Practice Speaking';
+                };
+            } else {
+                console.log('Speech recognition not supported');
+            }
+        }
+
+        // ===== START PRACTICE =====
+        function startPractice() {
+            if (!recognition) {
+                alert('Speech recognition is not supported in your browser. Please use Chrome or Edge.');
+                return;
+            }
+
+            if (isListening) {
+                recognition.stop();
+                return;
+            }
+
+            isListening = true;
+            document.getElementById('practiceBtn').classList.add('listening');
+            document.getElementById('practiceBtn').textContent = '🎤 Listening...';
+            document.getElementById('practiceFeedback').innerHTML = '<div class="feedback">Speak now...</div>';
+
+            try {
+                recognition.start();
+            } catch (error) {
+                console.error('Recognition start error:', error);
+                isListening = false;
+                document.getElementById('practiceBtn').classList.remove('listening');
+            }
+        }
+
+        // ===== CHECK PRONUNCIATION =====
+        function checkPronunciation(spokenWord) {
+            const correctWord = currentWord.toLowerCase();
+            const feedbackDiv = document.getElementById('practiceFeedback');
+
+            if (spokenWord === correctWord) {
+                feedbackDiv.innerHTML = `
+                    <div class="feedback success">
+                        ✅ Perfect! You said: "${spokenWord}"<br>
+                        Accuracy: 100%
+                    </div>
+                `;
+            } else {
+                const similarity = calculateSimilarity(spokenWord, correctWord);
+                
+                if (similarity > 0.7) {
+                    feedbackDiv.innerHTML = `
+                        <div class="feedback success">
+                            ⚠️ Close! You said: "${spokenWord}"<br>
+                            Expected: "${correctWord}"<br>
+                            Accuracy: ${Math.round(similarity * 100)}%<br>
+                            Try again for a perfect match!
+                        </div>
+                    `;
+                } else {
+                    feedbackDiv.innerHTML = `
+                        <div class="feedback error">
+                            ❌ Not quite. You said: "${spokenWord}"<br>
+                            Expected: "${correctWord}"<br>
+                            Accuracy: ${Math.round(similarity * 100)}%<br>
+                            Click 🔊 Listen to hear the correct pronunciation, then try again!
+                        </div>
+                    `;
+                }
+            }
+        }
+
+        // ===== CALCULATE SIMILARITY =====
+        function calculateSimilarity(str1, str2) {
+            const longer = str1.length > str2.length ? str1 : str2;
+            const shorter = str1.length > str2.length ? str2 : str1;
+            
+            if (longer.length === 0) return 1.0;
+            
+            const editDistance = getEditDistance(longer, shorter);
+            return (longer.length - editDistance) / longer.length;
+        }
+
+        function getEditDistance(str1, str2) {
+            const matrix = [];
+
+            for (let i = 0; i <= str2.length; i++) {
+                matrix[i] = [i];
+            }
+
+            for (let j = 0; j <= str1.length; j++) {
+                matrix[0][j] = j;
+            }
+
+            for (let i = 1; i <= str2.length; i++) {
+                for (let j = 1; j <= str1.length; j++) {
+                    if (str2.charAt(i - 1) === str1.charAt(j - 1)) {
+                        matrix[i][j] = matrix[i - 1][j - 1];
+                    } else {
+                        matrix[i][j] = Math.min(
+                            matrix[i - 1][j - 1] + 1,
+                            matrix[i][j - 1] + 1,
+                            matrix[i - 1][j] + 1
+                        );
+                    }
+                }
+            }
+
+            return matrix[str2.length][str1.length];
+        }
+
+        
+</script>
 </body>
 </html>
