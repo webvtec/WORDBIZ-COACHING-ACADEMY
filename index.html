@@ -795,22 +795,23 @@ function initializeAlphabet() {
 }
 
 
-// ===== LOAD COMPLETE DICTIONARY WORD LIST =====
+
+// ===== LOAD WORDS FROM GOOGLE DOCS =====
 // ===== LOAD WORDS FROM GOOGLE DOCS =====
 async function loadWords() {
     try {
         document.getElementById('statusMessage').innerHTML = 
             `⏳ Loading word list from Google Docs... Please wait.`;
         
-        // REPLACE WITH YOUR GOOGLE DOCS EXPORT LINK
-        const googleDocsUrl = 'https://docs.google.com/document/d/YOUR_DOCUMENT_ID/export?format=txt';
+        // Google Docs export URL
+        const googleDocsUrl = 'https://docs.google.com/document/d/1HmLbNiT0KA8djBm9c2xKMlPUXw-ciTmlTm9dFCFP-nc/export?format=txt';
         
         const response = await fetch(googleDocsUrl);
 
         if (!response.ok) throw new Error('Failed to load words from Google Docs');
         
         const text = await response.text();
-        allWords = text.split(/[\n\r,]+/) // Split by newlines or commas
+        allWords = text.split(/[\n\r\s,]+/) // Split by newlines, spaces, or commas
             .map(word => word.trim().toLowerCase())
             .filter(word => 
                 word.length > 0 && 
