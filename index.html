@@ -822,7 +822,7 @@ async function loadWords() {
         const text = await response.text();
         allWords = text.split('\n')
             .map(word => word.trim().toLowerCase())
-            .filter(word => word.length > 2)
+            .filter(word => word.length > 1)
             .sort();
         
         console.log(`Loaded ${allWords.length} words`);
