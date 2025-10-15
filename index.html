@@ -802,11 +802,7 @@ async function loadWords() {
         if (!response.ok) throw new Error('Failed to load words');
         
         const json = await response.json();
-        // Filter out single letters and very short words
-        allWords = Object.keys(json).filter(word => 
-            word.length > 1 && 
-            /^[a-zA-Z]+$/.test(word) // Only letters, no special characters
-        );
+        allWords = Object.keys(json).filter(word => word.length > 1); // Filter out 1 letter words
         
         console.log(`Loaded ${allWords.length} words`);
         return Promise.resolve();
