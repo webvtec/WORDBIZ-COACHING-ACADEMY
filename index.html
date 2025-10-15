@@ -705,9 +705,17 @@
         }
 
         // ===== LOAD WORDS FROM FILE =====
-        async function loadWords() {
-            try {
-                const response = await fetch('data/words.txt');
+async function loadWords() {
+    try {
+        const response = await fetch('https://raw.githubusercontent.com/dwyl/english-words/master/words_alpha.txt');
+```
+
+---
+
+## **✅ NOW YOU ONLY NEED 1 FILE TOTAL:**
+```
+your-repository/
+└── index.html          ← Everything in one file!
                 if (!response.ok) throw new Error('Failed to load words');
                 
                 const text = await response.text();
