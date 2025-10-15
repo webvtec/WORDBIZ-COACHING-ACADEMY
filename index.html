@@ -794,22 +794,36 @@ function initializeAlphabet() {
     });
 }
 
-// ===== LOAD WORDS FROM QUALITY WORD LIST =====
+// ===== LOAD WORDS - CLEANEST OPTION =====
 async function loadWords() {
     try {
         document.getElementById('statusMessage').innerHTML = 
             `⏳ Loading word database... Please wait.`;
         
-        const response = await fetch('https://raw.githubusercontent.com/redbo/scrabble/master/dictionary.txt');
+        // Using COCA (Corpus of Contemporary American English) - 60,000 most frequent words
+        const response = await fetch('https://raw.githubusercontent.com/hermitdave/FrequencyWords/master/content/2018/en/en_50k.txt');
+        
         if (!response.ok) throw new Error('Failed to load words');
         
         const text = await response.text();
         allWords = text.split('\n')
-            .map(word => word.trim().toLowerCase())
-            .filter(word => word.length > 1)
+            .map(line => {
+                // Format is "word frequency" - extract just the word
+                const word = line.trim().split(/\s+/)[0].toLowerCase();
+                return word;
+            })
+            .filter(word => 
+                word.length >= 3 && 
+                word.length <= 15 && 
+                /^[a-z]+$/.test(word) &&
+                /[aeiou]/.test(word)
+            )
             .sort();
         
         console.log(`Loaded ${allWords.length} words`);
+        
+        document.getElementById('statusMessage').innerHTML = 
+            `✅ ${allWords.length.toLocaleString()} words loaded! Select a letter to filter or search for specific words.`;
         
         return Promise.resolve();
     } catch (error) {
