@@ -809,7 +809,7 @@ async function loadWords() {
         allWords = text.split('\n')
             .map(word => word.trim().toLowerCase())
             .filter(word => 
-                word.length > 2 && 
+                word.length > 1 && 
                 /^[a-z]+$/.test(word) && // Only letters
                 /[aeiou]/.test(word) // Must have vowels
             )
