@@ -870,6 +870,9 @@
         } else {
             // Step 2: Word NOT in cache - fetch from API (COSTS MONEY)
             console.log('⚠️ Not in cache - calling paid API...');
+            console.log('API URL:', CLOUD_FUNCTION_URL);
+            console.log('Request payload:', { data: { word: word } });
+            
             document.getElementById('modalContent').innerHTML = '<div class="loading">🤖 Fetching from paid API (first time)...</div>';
             
             const response = await fetch(CLOUD_FUNCTION_URL, {
@@ -880,11 +883,18 @@
                 body: JSON.stringify({ data: { word: word } })
             });
 
+            console.log('Response Status:', response.status);
+            console.log('Response OK:', response.ok);
+            console.log('Response Headers:', [...response.headers.entries()]);
+
             if (!response.ok) {
-                throw new Error('Failed to fetch definition');
+                const errorText = await response.text();
+                console.error('Error Response Body:', errorText);
+                throw new Error(`API Error (${response.status}): ${errorText || response.statusText}`);
             }
 
             const data = await response.json();
+            console.log('Response Data:', data);
             
             if (data.result) {
                 // Step 3: Store in Firestore for future use
@@ -897,16 +907,78 @@
                 
                 displayWordDetails(data.result);
             } else {
-                throw new Error('No definition found');
+                throw new Error('No definition found in API response');
             }
         }
     } catch (error) {
-        console.error('Error fetching definition:', error);
+        console.error('❌ FULL ERROR:', error);
+        console.error('Error Type:', error.constructor.name);
+        console.error('Error Stack:', error.stack);
+        
+        let errorDetails = '';
+        
+        // Detailed error categorization
+        if (error.message.includes('Failed to fetch') || error.name === 'TypeError') {
+            errorDetails = `
+                <strong>🔴 Network/CORS Error:</strong><br><br>
+                <strong>Possible causes:</strong><br>
+                1. Cloud Function not deployed or not accessible<br>
+                2. CORS not configured on Cloud Function<br>
+                3. Function URL incorrect<br>
+                4. Network connectivity issue<br><br>
+                
+                <strong>Your Function URL:</strong><br>
+                <code style="background: #f0f0f0; padding: 5px; display: block; word-break: break-all;">
+                    ${CLOUD_FUNCTION_URL}
+                </code><br>
+                
+                <strong>To fix:</strong><br>
+                • Go to Google Cloud Console<br>
+                • Find your Cloud Function<br>
+                • Add CORS headers in your function code:<br>
+                <code style="background: #f0f0f0; padding: 10px; display: block; margin-top: 5px;">
+                res.set('Access-Control-Allow-Origin', '*');<br>
+                res.set('Access-Control-Allow-Methods', 'POST');<br>
+                res.set('Access-Control-Allow-Headers', 'Content-Type');
+                </code>
+            `;
+        } else if (error.message.includes('API Error')) {
+            errorDetails = `
+                <strong>🔴 API Response Error:</strong><br><br>
+                ${error.message}<br><br>
+                <strong>What this means:</strong><br>
+                The Cloud Function responded but with an error status.<br>
+                Check the Cloud Function logs in Google Cloud Console.
+            `;
+        } else if (error.message.includes('No definition found')) {
+            errorDetails = `
+                <strong>🔴 Definition Not Available:</strong><br><br>
+                The API returned successfully but didn't include a definition.<br>
+                The word "${word}" might not be in the dictionary API.
+            `;
+        } else {
+            errorDetails = `
+                <strong>🔴 Unexpected Error:</strong><br><br>
+                <strong>Error Message:</strong><br>
+                ${error.message}<br><br>
+                <strong>Error Type:</strong> ${error.constructor.name}
+            `;
+        }
+        
         document.getElementById('modalContent').innerHTML = `
             <div class="word-definition">
                 <strong>Word:</strong> ${word}<br><br>
-                ❌ Unable to fetch definition. Please try again.<br>
-                Error: ${error.message}<br><br>
+                ❌ <strong>Unable to fetch definition</strong><br><br>
+                ${errorDetails}<br><br>
+                <details style="margin-top: 20px; background: #f9f9f9; padding: 10px; border-radius: 5px;">
+                    <summary style="cursor: pointer; font-weight: bold;">🔧 Technical Details (for debugging)</summary>
+                    <pre style="overflow-x: auto; font-size: 0.85rem; margin-top: 10px;">${JSON.stringify({
+                        errorMessage: error.message,
+                        errorType: error.constructor.name,
+                        stack: error.stack
+                    }, null, 2)}</pre>
+                </details>
+                <hr style="margin: 20px 0; border: 1px solid #ddd;">
                 You can still practice pronunciation using the buttons below.
             </div>
         `;
