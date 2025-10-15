@@ -750,9 +750,14 @@ function navigateTo(section) {
         targetSection.classList.add('active');
     }
 
-    // Reload words if navigating to word database and words haven't loaded
-    if (section === 'word-database' && allWords.length === 0) {
-        loadWords();
+    // Load ALL words when navigating to word database
+    if (section === 'word-database') {
+        if (allWords.length === 0) {
+            loadWords();
+        } else {
+            // Display all words immediately
+            displayWords(allWords);
+        }
     }
 
     // Close sidebar
@@ -902,59 +907,88 @@ function navigateTo(section) {
             }
         }
 
-        // ===== DISPLAY WORD DETAILS =====
-        function displayWordDetails(wordData) {
-            const phonetic = wordData.phonetic || wordData.phonetics?.[0]?.text || '';
-            document.getElementById('modalPhonetic').textContent = phonetic;
+       
+// ===== DISPLAY WORD DETAILS =====
+function displayWordDetails(wordData) {
+    const phonetic = wordData.phonetic || wordData.phonetics?.[0]?.text || '';
+    document.getElementById('modalPhonetic').textContent = phonetic;
 
-            let html = '';
+    let html = '';
+    const currentWordLower = currentWord.toLowerCase();
 
-            wordData.meanings.forEach(meaning => {
-                html += `
-                    <div style="margin-bottom: 25px;">
-                        <span class="word-pos">${meaning.partOfSpeech}</span>
-                        <div class="word-definition">
-                            <strong>Definition:</strong> ${meaning.definitions[0].definition}
-                        </div>
-                `;
+    wordData.meanings.forEach(meaning => {
+        // Filter definitions that actually contain the word or are relevant
+        const validDefinitions = meaning.definitions.filter(def => {
+            const defLower = def.definition.toLowerCase();
+            const exampleLower = (def.example || '').toLowerCase();
+            
+            // Check if definition or example contains the actual word
+            return defLower.includes(currentWordLower) || 
+                   exampleLower.includes(currentWordLower) ||
+                   !def.example; // Include definitions without examples
+        });
 
-                if (meaning.definitions[0].example) {
-                    html += `
-                        <div class="word-example">
-                            <strong>Example:</strong> "${meaning.definitions[0].example}"
-                        </div>
-                    `;
-                }
+        if (validDefinitions.length === 0) return; // Skip if no valid definitions
 
-                // Store all examples for "Next Example" feature
-                if (meaning.definitions.length > 1) {
-                    html += `
-                        <button class="next-example-btn" onclick="showNextExample('${meaning.partOfSpeech}')">
-                            📖 Show More Examples
-                        </button>
-                        <div id="extraExamples-${meaning.partOfSpeech}" class="example-list" style="display:none;">
-                    `;
+        html += `
+            <div style="margin-bottom: 25px;">
+                <span class="word-pos">${meaning.partOfSpeech}</span>
+                <div class="word-definition">
+                    <strong>Definition:</strong> ${validDefinitions[0].definition}
+                </div>
+        `;
 
-                    meaning.definitions.slice(1).forEach(def => {
-                        if (def.example) {
-                            html += `
-                                <div class="example-item">
-                                    <strong>Definition:</strong> ${def.definition}<br>
-                                    <strong>Example:</strong> "${def.example}"
-                                </div>
-                            `;
-                        }
-                    });
-
-                    html += '</div>';
-                }
-
-                html += '</div>';
-            });
-
-            document.getElementById('modalContent').innerHTML = html;
+        // Only show example if it contains the actual word
+        if (validDefinitions[0].example && validDefinitions[0].example.toLowerCase().includes(currentWordLower)) {
+            html += `
+                <div class="word-example">
+                    <strong>Example:</strong> "${validDefinitions[0].example}"
+                </div>
+            `;
         }
 
+        // Show more examples button only if there are valid additional examples
+        const additionalValidExamples = validDefinitions.slice(1).filter(def => 
+            def.example && def.example.toLowerCase().includes(currentWordLower)
+        );
+
+        if (additionalValidExamples.length > 0) {
+            html += `
+                <button class="next-example-btn" onclick="showNextExample('${meaning.partOfSpeech}')">
+                    📖 Show More Examples
+                </button>
+                <div id="extraExamples-${meaning.partOfSpeech}" class="example-list" style="display:none;">
+            `;
+
+            additionalValidExamples.forEach(def => {
+                html += `
+                    <div class="example-item">
+                        <strong>Definition:</strong> ${def.definition}<br>
+                        <strong>Example:</strong> "${def.example}"
+                    </div>
+                `;
+            });
+
+            html += '</div>';
+        }
+
+        html += '</div>';
+    });
+
+    // If no valid content found
+    if (html === '') {
+        html = `
+            <div class="word-definition">
+                <strong>Word:</strong> ${currentWord}<br><br>
+                Limited definition available for this word.<br>
+                You can still practice pronunciation using the buttons below.
+            </div>
+        `;
+    }
+
+    document.getElementById('modalContent').innerHTML = html;
+}
+         
         // ===== SHOW NEXT EXAMPLE =====
         function showNextExample(pos) {
             const extraExamples = document.getElementById(`extraExamples-${pos}`);
