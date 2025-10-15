@@ -859,7 +859,7 @@
 
     try {
         // Step 1: Check if word exists in Firestore cache
-        const wordRef = db.collection('word_definitions').doc(word.toLowerCase());
+        const wordRef = db.collection('dictionary').doc(word.toLowerCase());
         const wordDoc = await wordRef.get();
 
         if (wordDoc.exists) {
