@@ -1048,43 +1048,70 @@ function navigateTo(section) {
             }
         }
 
-        // ===== CHECK PRONUNCIATION =====
-        function checkPronunciation(spokenWord) {
-            const correctWord = currentWord.toLowerCase();
-            const feedbackDiv = document.getElementById('practiceFeedback');
+       // ===== CHECK PRONUNCIATION =====
+function checkPronunciation(spokenWord) {
+    const correctWord = currentWord.toLowerCase();
+    const feedbackDiv = document.getElementById('practiceFeedback');
+    
+    // Clean up both words - remove punctuation, extra spaces
+    const cleanSpoken = spokenWord.replace(/[^\w\s]/gi, '').trim();
+    const cleanCorrect = correctWord.replace(/[^\w\s]/gi, '').trim();
 
-            if (spokenWord === correctWord) {
-                feedbackDiv.innerHTML = `
-                    <div class="feedback success">
-                        ✅ Perfect! You said: "${spokenWord}"<br>
-                        Accuracy: 100%
-                    </div>
-                `;
-            } else {
-                const similarity = calculateSimilarity(spokenWord, correctWord);
-                
-                if (similarity > 0.7) {
-                    feedbackDiv.innerHTML = `
-                        <div class="feedback success">
-                            ⚠️ Close! You said: "${spokenWord}"<br>
-                            Expected: "${correctWord}"<br>
-                            Accuracy: ${Math.round(similarity * 100)}%<br>
-                            Try again for a perfect match!
-                        </div>
-                    `;
-                } else {
-                    feedbackDiv.innerHTML = `
-                        <div class="feedback error">
-                            ❌ Not quite. You said: "${spokenWord}"<br>
-                            Expected: "${correctWord}"<br>
-                            Accuracy: ${Math.round(similarity * 100)}%<br>
-                            Click 🔊 Listen to hear the correct pronunciation, then try again!
-                        </div>
-                    `;
-                }
-            }
-        }
+    // Check for exact match
+    if (cleanSpoken === cleanCorrect) {
+        feedbackDiv.innerHTML = `
+            <div class="feedback success">
+                ✅ Perfect! You said: "${spokenWord}"<br>
+                Accuracy: 100%
+            </div>
+        `;
+        return;
+    }
 
+    // Check if spoken word contains the correct word
+    if (cleanSpoken.includes(cleanCorrect) || cleanCorrect.includes(cleanSpoken)) {
+        feedbackDiv.innerHTML = `
+            <div class="feedback success">
+                ✅ Great! You said: "${spokenWord}"<br>
+                Expected: "${correctWord}"<br>
+                Close enough - Well done!
+            </div>
+        `;
+        return;
+    }
+
+    const similarity = calculateSimilarity(cleanSpoken, cleanCorrect);
+    
+    // More lenient thresholds
+    if (similarity > 0.6) {
+        feedbackDiv.innerHTML = `
+            <div class="feedback success">
+                ✅ Good effort! You said: "${spokenWord}"<br>
+                Expected: "${correctWord}"<br>
+                Accuracy: ${Math.round(similarity * 100)}%<br>
+                That's close enough!
+            </div>
+        `;
+    } else if (similarity > 0.4) {
+        feedbackDiv.innerHTML = `
+            <div class="feedback success">
+                ⚠️ Close! You said: "${spokenWord}"<br>
+                Expected: "${correctWord}"<br>
+                Accuracy: ${Math.round(similarity * 100)}%<br>
+                Try again for a better match!
+            </div>
+        `;
+    } else {
+        feedbackDiv.innerHTML = `
+            <div class="feedback error">
+                ❌ Not quite. You said: "${spokenWord}"<br>
+                Expected: "${correctWord}"<br>
+                Accuracy: ${Math.round(similarity * 100)}%<br>
+                Click 🔊 Listen to hear the correct pronunciation, then try again!
+            </div>
+        `;
+    }
+}
         // ===== CALCULATE SIMILARITY =====
         function calculateSimilarity(str1, str2) {
             const longer = str1.length > str2.length ? str1 : str2;
