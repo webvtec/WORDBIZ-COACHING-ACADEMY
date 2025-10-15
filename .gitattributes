@@ -1,0 +1,15 @@
+data/words.txt filter=lfs diff=lfs merge=lfs -text
+```
+5. Click **"Commit new file"**
+
+Then re-upload your `words.txt` file to the `data/` folder.
+
+---
+
+### **SOLUTION 2: Use External Hosting (Simpler)**
+
+Since the file is already publicly available, we'll just point to it directly!
+
+**We'll use the GitHub raw URL:**
+```
+https://raw.githubusercontent.com/dwyl/english-words/master/words_alpha.txt
