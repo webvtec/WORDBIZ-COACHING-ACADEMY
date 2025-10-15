@@ -847,49 +847,72 @@
         }
 
         // ===== SHOW WORD DETAIL (CALL CLOUD FUNCTION) =====
-        async function showWordDetail(word) {
-            currentWord = word;
-            
-            const modal = document.getElementById('wordModal');
-            document.getElementById('modalWord').textContent = word;
-            document.getElementById('modalPhonetic').textContent = 'Loading...';
-            document.getElementById('modalContent').innerHTML = '<div class="loading">🤖 Fetching AI-powered definition from Cloud Function...</div>';
-            
-            modal.classList.add('active');
+       async function showWordDetail(word) {
+    currentWord = word;
+    
+    const modal = document.getElementById('wordModal');
+    document.getElementById('modalWord').textContent = word;
+    document.getElementById('modalPhonetic').textContent = 'Loading...';
+    document.getElementById('modalContent').innerHTML = '<div class="loading">📚 Loading definition...</div>';
+    
+    modal.classList.add('active');
 
-            try {
-                const response = await fetch(CLOUD_FUNCTION_URL, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ data: { word: word } })
+    try {
+        // Step 1: Check if word exists in Firestore cache
+        const wordRef = db.collection('word_definitions').doc(word.toLowerCase());
+        const wordDoc = await wordRef.get();
+
+        if (wordDoc.exists) {
+            // Word found in cache - use it (NO API CALL = FREE!)
+            console.log('✅ Found in cache - no API call needed!');
+            const cachedData = wordDoc.data();
+            displayWordDetails(cachedData);
+        } else {
+            // Step 2: Word NOT in cache - fetch from API (COSTS MONEY)
+            console.log('⚠️ Not in cache - calling paid API...');
+            document.getElementById('modalContent').innerHTML = '<div class="loading">🤖 Fetching from paid API (first time)...</div>';
+            
+            const response = await fetch(CLOUD_FUNCTION_URL, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ data: { word: word } })
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to fetch definition');
+            }
+
+            const data = await response.json();
+            
+            if (data.result) {
+                // Step 3: Store in Firestore for future use
+                await wordRef.set({
+                    ...data.result,
+                    word: word.toLowerCase(),
+                    cachedAt: firebase.firestore.FieldValue.serverTimestamp()
                 });
-
-                if (!response.ok) {
-                    throw new Error('Failed to fetch definition');
-                }
-
-                const data = await response.json();
+                console.log('✅ Saved to Firestore cache!');
                 
-                if (data.result) {
-                    displayWordDetails(data.result);
-                } else {
-                    throw new Error('No definition found');
-                }
-            } catch (error) {
-                console.error('Error fetching definition:', error);
-                document.getElementById('modalContent').innerHTML = `
-                    <div class="word-definition">
-                        <strong>Word:</strong> ${word}<br><br>
-                        ❌ Unable to fetch definition. Please try again.<br>
-                        Error: ${error.message}<br><br>
-                        You can still practice pronunciation using the buttons below.
-                    </div>
-                `;
-                document.getElementById('modalPhonetic').textContent = '';
+                displayWordDetails(data.result);
+            } else {
+                throw new Error('No definition found');
             }
         }
+    } catch (error) {
+        console.error('Error fetching definition:', error);
+        document.getElementById('modalContent').innerHTML = `
+            <div class="word-definition">
+                <strong>Word:</strong> ${word}<br><br>
+                ❌ Unable to fetch definition. Please try again.<br>
+                Error: ${error.message}<br><br>
+                You can still practice pronunciation using the buttons below.
+            </div>
+        `;
+        document.getElementById('modalPhonetic').textContent = '';
+    }
+}
 
         // ===== DISPLAY WORD DETAILS =====
         function displayWordDetails(wordData) {
