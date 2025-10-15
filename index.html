@@ -795,37 +795,8 @@ function navigateTo(section) {
         }
 
         
-// ===== LOAD WORDS FROM QUALITY WORD LIST =====
-async function loadWords() {
-    try {
-        document.getElementById('statusMessage').innerHTML = 
-            `⏳ Loading word database... This may take a moment.`;
-        
-        // Using SCOWL wordlist - professionally curated English words
-        const response = await fetch('https://raw.githubusercontent.com/en-wl/wordlist/master/words.txt');
-        
-        if (!response.ok) throw new Error('Failed to load words');
-        
-        const text = await response.text();
-        allWords = text.split('\n')
-            .map(word => word.trim().toLowerCase())
-            .filter(word => word.length > 1) // Only remove 1 letter words
-            .sort();
-        
-        console.log(`Loaded ${allWords.length} words`);
-        
-        document.getElementById('statusMessage').innerHTML = 
-            `✅ ${allWords.length.toLocaleString()} words loaded! Select a letter to filter or search for specific words.`;
-        
-        return Promise.resolve();
-    } catch (error) {
-        console.error('Error loading words:', error);
-        document.getElementById('statusMessage').innerHTML = 
-            `❌ Error loading word database. Please refresh the page to try again.`;
-        return Promise.reject(error);
-    }
-}
-      
+
+   
 
 
         // ===== FILTER WORDS BY LETTER =====
@@ -838,7 +809,33 @@ async function loadWords() {
                 if (btn.textContent === letter) {
                     btn.classList.add('active');
                 }
-            });
+            });// ===== LOAD WORDS FROM QUALITY WORD LIST =====
+async function loadWords() {
+    try {
+        document.getElementById('statusMessage').innerHTML = 
+            `⏳ Loading word database... Please wait.`;
+        
+        // This list contains ~466k real English words - most comprehensive single source
+        const response = await fetch('https://raw.githubusercontent.com/palabras/en-us-hunspell-dict/master/words');
+        
+        if (!response.ok) throw new Error('Failed to load words');
+        
+        const text = await response.text();
+        allWords = text.split('\n')
+            .map(word => word.trim().toLowerCase())
+            .filter(word => word.length > 2)
+            .sort();
+        
+        console.log(`Loaded ${allWords.length} words`);
+        
+        return Promise.resolve();
+    } catch (error) {
+        console.error('Error loading words:', error);
+        document.getElementById('statusMessage').innerHTML = 
+            `❌ Error loading word database. Please refresh the page to try again.`;
+        return Promise.reject(error);
+    }
+}
 
             const filteredWords = allWords.filter(word => 
                 word.toLowerCase().startsWith(letter.toLowerCase())
