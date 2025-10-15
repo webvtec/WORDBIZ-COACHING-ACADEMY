@@ -780,42 +780,26 @@ function navigateTo(section) {
             overlay.classList.toggle('active');
         }
 
-        // ===== INITIALIZE ALPHABET NAVIGATION =====
-        function initializeAlphabet() {
-            const alphabetNav = document.getElementById('alphabetNav');
-            const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
-            
-            letters.forEach(letter => {
-                const btn = document.createElement('button');
-                btn.className = 'letter-btn';
-                btn.textContent = letter;
-                btn.onclick = () => filterByLetter(letter);
-                alphabetNav.appendChild(btn);
-            });
-        }
+     // ===== INITIALIZE ALPHABET NAVIGATION =====
+function initializeAlphabet() {
+    const alphabetNav = document.getElementById('alphabetNav');
+    const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+    
+    letters.forEach(letter => {
+        const btn = document.createElement('button');
+        btn.className = 'letter-btn';
+        btn.textContent = letter;
+        btn.onclick = () => filterByLetter(letter);
+        alphabetNav.appendChild(btn);
+    });
+}
 
-        
-
-   
-
-
-        // ===== FILTER WORDS BY LETTER =====
-        function filterByLetter(letter) {
-            currentLetter = letter;
-            
-            // Update active button
-            document.querySelectorAll('.letter-btn').forEach(btn => {
-                btn.classList.remove('active');
-                if (btn.textContent === letter) {
-                    btn.classList.add('active');
-                }
-            });// ===== LOAD WORDS FROM QUALITY WORD LIST =====
+// ===== LOAD WORDS FROM QUALITY WORD LIST =====
 async function loadWords() {
     try {
         document.getElementById('statusMessage').innerHTML = 
             `⏳ Loading word database... Please wait.`;
         
-        // This list contains ~466k real English words - most comprehensive single source
         const response = await fetch('https://raw.githubusercontent.com/redbo/scrabble/master/dictionary.txt');
         if (!response.ok) throw new Error('Failed to load words');
         
@@ -836,13 +820,24 @@ async function loadWords() {
     }
 }
 
-            const filteredWords = allWords.filter(word => 
-                word.toLowerCase().startsWith(letter.toLowerCase())
-            ); // Show ALL words
-
-            displayWords(filteredWords);
+// ===== FILTER WORDS BY LETTER =====
+function filterByLetter(letter) {
+    currentLetter = letter;
+    
+    // Update active button
+    document.querySelectorAll('.letter-btn').forEach(btn => {
+        btn.classList.remove('active');
+        if (btn.textContent === letter) {
+            btn.classList.add('active');
         }
+    });
 
+    const filteredWords = allWords.filter(word => 
+        word.toLowerCase().startsWith(letter.toLowerCase())
+    );
+
+    displayWords(filteredWords);
+}
         // ===== SEARCH WORD =====
         function searchWord() {
             const searchTerm = document.getElementById('searchInput').value.trim().toLowerCase();
