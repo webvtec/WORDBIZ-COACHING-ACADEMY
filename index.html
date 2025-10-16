@@ -2054,6 +2054,42 @@ function showQuestion() {
     `;
 }
 
+        function showQuizResults() {
+    const container = document.getElementById('practice-quiz-container');
+    const percentage = Math.round((quizScore / currentQuiz.questions.length) * 100);
+    
+    let message = '';
+    let emoji = '';
+    
+    if (percentage >= 80) {
+        message = 'Excellent! You\'re a word master!';
+        emoji = '🏆';
+    } else if (percentage >= 60) {
+        message = 'Great job! Keep practicing!';
+        emoji = '⭐';
+    } else if (percentage >= 40) {
+        message = 'Good effort! Review and try again!';
+        emoji = '💪';
+    } else {
+        message = 'Keep practicing! You\'ll get better!';
+        emoji = '📚';
+    }
+    
+    container.innerHTML = `
+        <div class="quiz-question-card" style="text-align: center;">
+            <div style="font-size: 4rem; margin: 20px 0;">${emoji}</div>
+            <h2>Quiz Complete!</h2>
+            <div class="quiz-score">Final Score: ${quizScore} / ${currentQuiz.questions.length}</div>
+            <p style="font-size: 1.5rem; margin: 20px 0; color: #0d3b66;">${percentage}%</p>
+            <p style="font-size: 1.2rem; margin: 20px 0;">${message}</p>
+            <div style="display: flex; gap: 10px; justify-content: center; margin-top: 30px;">
+                <button class="practice-btn" onclick="startPracticeQuiz()">🔄 Try Again</button>
+                <button class="practice-btn" onclick="navigateTo('home')">🏠 Home</button>
+            </div>
+        </div>
+    `;
+}
+
 function joinLiveTournament() {
     document.getElementById('live-quiz-container').innerHTML = 
         '<div class="loading">🔍 Looking for available tournaments...</div>';
