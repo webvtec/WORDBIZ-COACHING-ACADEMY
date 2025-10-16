@@ -1860,7 +1860,14 @@ async function displayFavorites() {
         return;
     }
 
-  
+    // Show loading message
+    container.innerHTML = '<p>Loading your favorites...</p>';
+
+    // Wait a moment for data to load if needed
+    if (userFavorites.length === 0) {
+        await new Promise(resolve => setTimeout(resolve, 500));
+    }
+
     if (userFavorites.length === 0) {
         container.innerHTML = '<p>No favorites yet. Add words during quiz by clicking the ⭐ button!</p>';
         return;
@@ -2218,6 +2225,13 @@ async function displayIncorrectQuestions() {
         return;
     }
 
+    // Show loading message
+    container.innerHTML = '<p>Loading your incorrect answers...</p>';
+
+    // Wait a moment for data to load if needed
+    if (userIncorrectQuestions.length === 0) {
+        await new Promise(resolve => setTimeout(resolve, 500));
+    }
 
     let filtered = userIncorrectQuestions;
     if (currentIncorrectFilter !== 'all') {
@@ -2246,7 +2260,7 @@ async function displayIncorrectQuestions() {
         </div>
     `;
 }
-
+        
 function filterIncorrectQuiz(type) {
     currentIncorrectFilter = type;
     displayIncorrectQuestions();
