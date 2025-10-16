@@ -1185,7 +1185,9 @@ async function navigateTo(section) {
     
 if (section === 'favorites') {
     const container = document.getElementById('favorites-container');
-    container.innerHTML = '<p>Loading your favorites...</p>';
+    if (container) {
+        container.innerHTML = '<p>Loading your favorites...</p>';
+    }
     
     if (currentUser) {
         await loadUserFavorites(currentUser.uid);
@@ -1197,7 +1199,9 @@ if (section === 'favorites') {
 
 if (section === 'incorrect-quiz') {
     const container = document.getElementById('incorrect-quiz-container');
-    container.innerHTML = '<p>Loading your incorrect answers...</p>';
+    if (container) {
+        container.innerHTML = '<p>Loading your incorrect answers...</p>';
+    }
     
     if (currentUser) {
         await loadIncorrectQuestions(currentUser.uid);
