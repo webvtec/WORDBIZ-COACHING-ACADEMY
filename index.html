@@ -1188,13 +1188,11 @@ if (section === 'favorites') {
     container.innerHTML = '<p>Loading your favorites...</p>';
     
     if (currentUser) {
-        console.log('Before loading favorites, current count:', userFavorites.length);
         await loadUserFavorites(currentUser.uid);
-        console.log('After loading favorites, new count:', userFavorites.length);
+        displayFavorites();
+    } else {
+        displayFavorites();
     }
-    
-    console.log('About to display favorites, count:', userFavorites.length);
-    displayFavorites();
 }
 
 if (section === 'incorrect-quiz') {
@@ -1202,14 +1200,13 @@ if (section === 'incorrect-quiz') {
     container.innerHTML = '<p>Loading your incorrect answers...</p>';
     
     if (currentUser) {
-        console.log('Before loading incorrect, current count:', userIncorrectQuestions.length);
         await loadIncorrectQuestions(currentUser.uid);
-        console.log('After loading incorrect, new count:', userIncorrectQuestions.length);
+        displayIncorrectQuestions();
+    } else {
+        displayIncorrectQuestions();
     }
-    
-    console.log('About to display incorrect questions, count:', userIncorrectQuestions.length);
-    displayIncorrectQuestions();
 }
+    
     
     toggleSidebar();
 }
@@ -1857,9 +1854,9 @@ async function quickAddToFavorites(word, definition, buttonElement) {
     }
 }
 
-async function displayFavorites() {
+function displayFavorites() {
     const container = document.getElementById('favorites-container');
-
+    
     if (!currentUser) {
         container.innerHTML = `
             <p style="margin-bottom: 20px;">Sign in to save your favorite words and practice them anytime!</p>
@@ -1867,20 +1864,12 @@ async function displayFavorites() {
         `;
         return;
     }
-
-    // Show loading message
-    container.innerHTML = '<p>Loading your favorites...</p>';
-
-    // Wait a moment for data to load if needed
-    if (userFavorites.length === 0) {
-        await new Promise(resolve => setTimeout(resolve, 500));
-    }
-
+    
     if (userFavorites.length === 0) {
         container.innerHTML = '<p>No favorites yet. Add words during quiz by clicking the ⭐ button!</p>';
         return;
     }
-
+    
     container.innerHTML = `
         <button class="practice-btn" onclick="practiceFavorites()" style="margin-bottom: 20px;">🎯 Practice All Favorites</button>
         <div class="word-list" style="margin-top: 20px;">
@@ -1896,7 +1885,6 @@ async function displayFavorites() {
         </div>
     `;
 }
-
 async function removeFavorite(favoriteId) {
     if (!currentUser) return;
 
