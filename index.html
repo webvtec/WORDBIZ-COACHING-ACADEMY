@@ -1438,7 +1438,7 @@ function switchQuizMode(mode) {
     }
 }
 
-async function startPracticeQuiz() {
+        async function startPracticeQuiz() {
     document.getElementById('practice-quiz-container').innerHTML = '<div class="loading">🎲 Generating quiz questions...</div>';
     
     // Get 5 random words from your database
@@ -1449,11 +1449,16 @@ async function startPracticeQuiz() {
     }
 
     try {
-        // Call Cloud Function to generate quiz
-        const response = await fetch(CLOUD_FUNCTION_URL.replace('getWordDefinition', 'generatePracticeQuiz'), {
+        // Call Cloud Function with action parameter
+        const response = await fetch(CLOUD_FUNCTION_URL, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ data: { words: quizWords } })
+            body: JSON.stringify({ 
+                data: { 
+                    action: 'generatePracticeQuiz',
+                    words: quizWords 
+                } 
+            })
         });
 
         const data = await response.json();
