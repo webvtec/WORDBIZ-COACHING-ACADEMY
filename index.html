@@ -34,7 +34,7 @@
             max-width: 100vw;
         }
 
-        .top-bar {
+.top-bar {
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -42,6 +42,24 @@
             border-bottom: 2px solid rgba(255,255,255,0.2);
             width: 100%;
             gap: 10px;
+        }
+        
+        @media (min-width: 769px) {
+            .top-bar {
+                flex-direction: row;
+                justify-content: space-between;
+            }
+            
+            .logo {
+                text-align: left;
+                width: auto;
+                flex: 1;
+            }
+            
+            .left-section {
+                width: auto;
+                flex: 0 0 auto;
+            }
         }
 
         .left-section {
@@ -70,22 +88,26 @@
             border-radius: 2px;
         }
 
-       .logo {
+.logo {
             font-size: 1.6rem;
             font-weight: bold;
             font-style: italic;
             color: white;
             letter-spacing: 2px;
-            white-space: nowrap;
             text-align: center;
             width: 100%;
+            padding: 0 10px;
+            word-wrap: break-word;
+            white-space: normal;
+            line-height: 1.3;
         }
-
-        .nav-bar {
+    
+.nav-bar {
             display: flex;
             background: #0a2f4d;
             justify-content: space-evenly;
             width: 100%;
+            overflow-x: auto;
         }
 
         .nav-item {
@@ -99,6 +121,7 @@
             cursor: pointer;
             white-space: nowrap;
             flex: 1;
+            min-width: fit-content;
         }
 
         .nav-item:hover {
@@ -796,9 +819,16 @@
         }
 
         /* ===== RESPONSIVE ===== */
-        @media (max-width: 768px) {
+     @media (max-width: 768px) {
             .logo {
                 font-size: 1.2rem;
+                letter-spacing: 1px;
+            }
+            
+            .nav-item {
+                font-size: 1rem;
+                padding: 14px 10px;
+                letter-spacing: 0.5px;
             }
 
             .welcome-section h1 {
@@ -859,8 +889,8 @@
             </div>
         </div>
         
-        <nav class="nav-bar">
-            <div class="nav-item" onclick="navigateTo('quiz')">QUIZ</div>
+<nav class="nav-bar">
+            <div class="nav-item" onclick="navigateTo('quiz', true)">QUIZ</div>
             <div class="nav-item">TOURNAMENTS</div>
             <div class="nav-item">SPELLING</div>
         </nav>
@@ -1080,7 +1110,7 @@
         });
         
         // ===== NAVIGATION =====
-        async function navigateTo(section) {
+        async function navigateTo(section, skipSidebarClose = false) {
             // Check if user needs to be logged in
             if ((section === 'favorites' || section === 'incorrect-quiz') && !currentUser) {
                 alert('Please sign in to access this feature');
@@ -1120,14 +1150,23 @@
                 displayIncorrect();
             }
             
-            toggleSidebar();
+           // Only close sidebar if it came from sidebar menu (not from nav bar)
+            if (!skipSidebarClose) {
+                toggleSidebar(true);
+            }
         }
-
-        function toggleSidebar() {
+        
+       function toggleSidebar(forceClose = false) {
             const sidebar = document.getElementById('sidebar');
             const overlay = document.getElementById('overlay');
-            sidebar.classList.toggle('open');
-            overlay.classList.toggle('active');
+            
+            if (forceClose) {
+                sidebar.classList.remove('open');
+                overlay.classList.remove('active');
+            } else {
+                sidebar.classList.toggle('open');
+                overlay.classList.toggle('active');
+            }
         }
 
         // ===== INITIALIZE ALPHABET =====
