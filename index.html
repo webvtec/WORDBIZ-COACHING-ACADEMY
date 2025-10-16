@@ -1158,7 +1158,7 @@ auth.onAuthStateChanged(user => {
 });
         
 // ===== NAVIGATION =====
-function navigateTo(section) {
+async function navigateTo(section) {
     document.querySelectorAll('.content-section').forEach(sec => {
         sec.classList.remove('active');
     });
@@ -1183,24 +1183,24 @@ function navigateTo(section) {
         }
     }
     
-   if (section === 'favorites') {
+if (section === 'favorites') {
+    const container = document.getElementById('favorites-container');
+    container.innerHTML = '<p>Loading your favorites...</p>';
+    
     if (currentUser) {
-        loadUserFavorites(currentUser.uid).then(() => {
-            displayFavorites();
-        });
-    } else {
-        displayFavorites();
+        await loadUserFavorites(currentUser.uid);
     }
+    displayFavorites();
 }
 
 if (section === 'incorrect-quiz') {
+    const container = document.getElementById('incorrect-quiz-container');
+    container.innerHTML = '<p>Loading your incorrect answers...</p>';
+    
     if (currentUser) {
-        loadIncorrectQuestions(currentUser.uid).then(() => {
-            displayIncorrectQuestions();
-        });
-    } else {
-        displayIncorrectQuestions();
+        await loadIncorrectQuestions(currentUser.uid);
     }
+    displayIncorrectQuestions();
 }
     
     toggleSidebar();
@@ -2214,47 +2214,32 @@ async function loadIncorrectQuestions(userId) {
     }
 }
 
-async function displayIncorrectQuestions() {
-    const container = document.getElementById('incorrect-quiz-container');
+async function displayFavorites() {
+    const container = document.getElementById('favorites-container');
 
     if (!currentUser) {
         container.innerHTML = `
-            <p style="margin-bottom: 20px;">Sign in to track your incorrect quiz answers!</p>
+            <p style="margin-bottom: 20px;">Sign in to save your favorite words and practice them anytime!</p>
             <button class="practice-btn" onclick="showAuthModal()">Sign In / Sign Up</button>
         `;
         return;
     }
 
-    // Show loading message
-    container.innerHTML = '<p>Loading your incorrect answers...</p>';
-
-    // Wait a moment for data to load if needed
-    if (userIncorrectQuestions.length === 0) {
-        await new Promise(resolve => setTimeout(resolve, 500));
-    }
-
-    let filtered = userIncorrectQuestions;
-    if (currentIncorrectFilter !== 'all') {
-        filtered = userIncorrectQuestions.filter(q => q.quizType === currentIncorrectFilter);
-    }
-
-    if (filtered.length === 0) {
-        container.innerHTML = '<p>No incorrect answers yet. Keep practicing!</p>';
+    if (userFavorites.length === 0) {
+        container.innerHTML = '<p>No favorites yet. Add words during quiz by clicking the ⭐ button!</p>';
         return;
     }
 
     container.innerHTML = `
-        <button class="practice-btn" onclick="practiceIncorrectQuestions()">🎯 Practice All Incorrect Answers</button>
+        <button class="practice-btn" onclick="practiceFavorites()" style="margin-bottom: 20px;">🎯 Practice All Favorites</button>
         <div class="word-list" style="margin-top: 20px;">
-            ${filtered.map(q => `
+            ${userFavorites.map(fav => `
                 <div class="word-card">
                     <div class="word-title">
-                        <span>${q.word}</span>
-                        <span style="font-size: 0.9rem; color: #666;">${q.quizType === 'practice' ? '📝 Practice' : '🏆 Live'}</span>
+                        <span>${fav.word}</span>
+                        <button class="remove-favorite" onclick="removeFavorite('${fav.id}')">Remove</button>
                     </div>
-                    <div class="word-definition"><strong>Q:</strong> ${q.question}</div>
-                    <div class="word-definition"><strong>✅ Answer:</strong> ${q.correctDefinition}</div>
-                    <button class="remove-favorite" onclick="removeIncorrectQuestion('${q.id}')">Remove</button>
+                    <div class="word-definition">${fav.definition}</div>
                 </div>
             `).join('')}
         </div>
