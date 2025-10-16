@@ -791,42 +791,7 @@
     font-weight: bold;
 }
 
-/* ===== FAVORITES STYLES ===== */
-.favorite-btn {
-    background: #ffd700;
-    color: #0d3b66;
-    padding: 8px 15px;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    font-weight: bold;
-    font-family: Georgia, serif;
-    margin-top: 10px;
-}
 
-.favorite-btn:hover {
-    background: #ffed4e;
-}
-
-.favorite-btn.added {
-    background: #28a745;
-    color: white;
-}
-
-.remove-favorite {
-    background: #dc3545;
-    color: white;
-    padding: 8px 15px;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    font-weight: bold;
-    font-family: Georgia, serif;
-}
-
-.remove-favorite:hover {
-    background: #c82333;
-}
     </style>
 </head>
 <body>
@@ -845,8 +810,6 @@
         <div class="sidebar-item" onclick="navigateTo('about')">About Us</div>
         <div class="sidebar-item" onclick="navigateTo('settings')">Settings</div>
         <div class="sidebar-item sign-in" onclick="showAuthModal()">SIGN IN</div>
-        <div class="sidebar-item" onclick="navigateTo('favorites')">My Favorites</div>
-        <div class="sidebar-item" onclick="navigateTo('incorrect-quiz')">Incorrect Quiz Questions</div>
         <div class="sidebar-item" id="sidebar-signout" style="display:none;" onclick="signOut()">Sign Out</div>
     </div>
 
@@ -1129,9 +1092,7 @@
         let isListening = false;
         let recognition = null;
         let currentUser = null;
-        let userFavorites = [];
-        let userIncorrectQuestions = [];
-        let currentIncorrectFilter = 'all'; 
+       
 
         // ===== INITIALIZE =====
        document.addEventListener('DOMContentLoaded', function() {
@@ -1183,33 +1144,7 @@ async function navigateTo(section) {
         }
     }
     
-if (section === 'favorites') {
-    const container = document.getElementById('favorites-container');
-    if (container) {
-        container.innerHTML = '<p>Loading your favorites...</p>';
-    }
-    
-    if (currentUser) {
-        await loadUserFavorites(currentUser.uid);
-        displayFavorites();
-    } else {
-        displayFavorites();
-    }
-}
 
-if (section === 'incorrect-quiz') {
-    const container = document.getElementById('incorrect-quiz-container');
-    if (container) {
-        container.innerHTML = '<p>Loading your incorrect answers...</p>';
-    }
-    
-    if (currentUser) {
-        await loadIncorrectQuestions(currentUser.uid);
-        displayIncorrectQuestions();
-    } else {
-        displayIncorrectQuestions();
-    }
-}
     
     
     toggleSidebar();
@@ -1818,126 +1753,7 @@ if (section === 'incorrect-quiz') {
         }
 
 
-   // ===== SIMPLIFIED FAVORITES FUNCTIONS WITH PRACTICE =====
-async function loadUserFavorites(userId) {
-    try {
-        const snapshot = await db.collection('users').doc(userId).collection('favorites').get();
-        userFavorites = [];
-        snapshot.forEach(doc => {
-            userFavorites.push({ id: doc.id, ...doc.data() });
-        });
-        console.log(`Loaded ${userFavorites.length} favorites`);
-    } catch (error) {
-        console.error('Error loading favorites:', error);
-    }
-}
 
-async function quickAddToFavorites(word, definition, buttonElement) {
-    if (!currentUser) {
-        alert('Please sign in to add favorites');
-        showAuthModal();
-        return;
-    }
-
-    try {
-        await db.collection('users').doc(currentUser.uid).collection('favorites').doc(word).set({
-            word: word,
-            definition: definition,
-            addedAt: firebase.firestore.FieldValue.serverTimestamp()
-        });
-
-        buttonElement.textContent = '✅ Added!';
-        buttonElement.style.background = '#28a745';
-        buttonElement.disabled = true;
-        
-        await loadUserFavorites(currentUser.uid);
-        console.log('Added to favorites:', word);
-    } catch (error) {
-        console.error('Error adding to favorites:', error);
-        alert('Failed to add to favorites');
-    }
-}
-
-function displayFavorites() {
-    const container = document.getElementById('favorites-container');
-    
-    if (!currentUser) {
-        container.innerHTML = `
-            <p style="margin-bottom: 20px;">Sign in to save your favorite words and practice them anytime!</p>
-            <button class="practice-btn" onclick="showAuthModal()">Sign In / Sign Up</button>
-        `;
-        return;
-    }
-    
-    if (userFavorites.length === 0) {
-        container.innerHTML = '<p>No favorites yet. Add words during quiz by clicking the ⭐ button!</p>';
-        return;
-    }
-    
-    container.innerHTML = `
-        <button class="practice-btn" onclick="practiceFavorites()" style="margin-bottom: 20px;">🎯 Practice All Favorites</button>
-        <div class="word-list" style="margin-top: 20px;">
-            ${userFavorites.map(fav => `
-                <div class="word-card">
-                    <div class="word-title">
-                        <span>${fav.word}</span>
-                        <button class="remove-favorite" onclick="removeFavorite('${fav.id}')">Remove</button>
-                    </div>
-                    <div class="word-definition">${fav.definition}</div>
-                </div>
-            `).join('')}
-        </div>
-    `;
-}
-async function removeFavorite(favoriteId) {
-    if (!currentUser) return;
-
-    try {
-        await db.collection('users').doc(currentUser.uid).collection('favorites').doc(favoriteId).delete();
-        displayFavorites();
-    } catch (error) {
-        console.error('Error removing favorite:', error);
-    }
-}
-
-async function practiceFavorites() {
-    if (userFavorites.length === 0) {
-        alert('No favorites to practice!');
-        return;
-    }
-
-    // Switch to quiz section
-    navigateTo('quiz');
-    
-    // Get favorite words
-    const favoriteWords = userFavorites.map(fav => fav.word).slice(0, 5);
-    
-    document.getElementById('practice-quiz-container').innerHTML = '<div class="loading">🎲 Creating quiz from your favorites...</div>';
-
-    try {
-        const response = await fetch(CLOUD_FUNCTION_URL, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ 
-                data: { 
-                    action: 'generatePracticeQuiz',
-                    words: favoriteWords 
-                } 
-            })
-        });
-
-        const data = await response.json();
-        currentQuiz = data.result;
-        currentQuestionIndex = 0;
-        quizScore = 0;
-        
-        showQuestion();
-    } catch (error) {
-        console.error('Error generating favorites quiz:', error);
-        document.getElementById('practice-quiz-container').innerHTML = 
-            '<div class="feedback error">Failed to generate quiz. Please try again.</div>';
-    }
-}
         // ===== QUIZ FUNCTIONS =====
 let currentQuiz = null;
 let currentQuestionIndex = 0;
@@ -2175,117 +1991,7 @@ function loadLeaderboard() {
         }
 
 
-  // ===== INCORRECT QUIZ QUESTIONS FUNCTIONS =====
-async function saveIncorrectQuestion(question, quizType) {
-    if (!currentUser) return;
-
-    try {
-        const incorrectRef = db.collection('users').doc(currentUser.uid).collection('incorrectQuestions');
-        await incorrectRef.add({
-            word: question.word,
-            question: question.question,
-            options: question.options,
-            correctAnswer: question.correctAnswer,
-            correctDefinition: question.correctDefinition || question.options[question.correctAnswer],
-            userAnswer: null, // You can track this if needed
-            quizType: quizType, // 'practice' or 'live'
-            addedAt: firebase.firestore.FieldValue.serverTimestamp()
-        });
-
-        console.log('Saved incorrect question');
-    } catch (error) {
-        console.error('Error saving incorrect question:', error);
-    }
-}
-        
-async function loadIncorrectQuestions(userId) {
-    if (!userId && !currentUser) return;
-    const uid = userId || currentUser.uid;
-    
-    try {
-       const snapshot = await db.collection('users').doc(uid).collection('incorrectQuestions').get();
-        userIncorrectQuestions = [];
-        snapshot.forEach(doc => {
-            userIncorrectQuestions.push({ id: doc.id, ...doc.data() });
-        });
-        console.log(`Loaded ${userIncorrectQuestions.length} incorrect questions`);
-    } catch (error) {
-        console.error('Error loading incorrect questions:', error);
-    }
-}
-
-async function displayIncorrectQuestions() {
-    const container = document.getElementById('incorrect-quiz-container');
-
-    if (!currentUser) {
-        container.innerHTML = `
-            <p style="margin-bottom: 20px;">Sign in to track your incorrect quiz answers!</p>
-            <button class="practice-btn" onclick="showAuthModal()">Sign In / Sign Up</button>
-        `;
-        return;
-    }
-
-    let filtered = userIncorrectQuestions;
-    if (currentIncorrectFilter !== 'all') {
-        filtered = userIncorrectQuestions.filter(q => q.quizType === currentIncorrectFilter);
-    }
-
-    if (filtered.length === 0) {
-        container.innerHTML = '<p>No incorrect answers yet. Keep practicing!</p>';
-        return;
-    }
-
-    container.innerHTML = `
-        <button class="practice-btn" onclick="practiceIncorrectQuestions()">🎯 Practice All Incorrect Answers</button>
-        <div class="word-list" style="margin-top: 20px;">
-            ${filtered.map(q => `
-                <div class="word-card">
-                    <div class="word-title">
-                        <span>${q.word}</span>
-                        <span style="font-size: 0.9rem; color: #666;">${q.quizType === 'practice' ? '📝 Practice' : '🏆 Live'}</span>
-                    </div>
-                    <div class="word-definition"><strong>Q:</strong> ${q.question}</div>
-                    <div class="word-definition"><strong>✅ Answer:</strong> ${q.correctDefinition}</div>
-                    <button class="remove-favorite" onclick="removeIncorrectQuestion('${q.id}')">Remove</button>
-                </div>
-            `).join('')}
-        </div>
-    `;
-}
-        
-function filterIncorrectQuiz(type) {
-    currentIncorrectFilter = type;
-    displayIncorrectQuestions();
-}
-
-async function removeIncorrectQuestion(questionId) {
-    if (!currentUser) return;
-
-    try {
-        await db.collection('users').doc(currentUser.uid).collection('incorrectQuestions').doc(questionId).delete();
-        displayIncorrectQuestions();
-    } catch (error) {
-        console.error('Error removing incorrect question:', error);
-    }
-}
-
-async function practiceIncorrectQuestions() {
-    if (userIncorrectQuestions.length === 0) {
-        alert('No incorrect questions to practice!');
-        return;
-    }
-
-    navigateTo('quiz');
-    
-    // Create quiz from incorrect questions
-    currentQuiz = {
-        questions: userIncorrectQuestions.slice(0, 5)
-    };
-    currentQuestionIndex = 0;
-    quizScore = 0;
-    
-    showQuestion();
-}
+ 
     </script>
 </body>
 </html>
