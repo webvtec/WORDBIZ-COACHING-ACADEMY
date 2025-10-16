@@ -1188,8 +1188,12 @@ if (section === 'favorites') {
     container.innerHTML = '<p>Loading your favorites...</p>';
     
     if (currentUser) {
+        console.log('Before loading favorites, current count:', userFavorites.length);
         await loadUserFavorites(currentUser.uid);
+        console.log('After loading favorites, new count:', userFavorites.length);
     }
+    
+    console.log('About to display favorites, count:', userFavorites.length);
     displayFavorites();
 }
 
@@ -1198,8 +1202,12 @@ if (section === 'incorrect-quiz') {
     container.innerHTML = '<p>Loading your incorrect answers...</p>';
     
     if (currentUser) {
+        console.log('Before loading incorrect, current count:', userIncorrectQuestions.length);
         await loadIncorrectQuestions(currentUser.uid);
+        console.log('After loading incorrect, new count:', userIncorrectQuestions.length);
     }
+    
+    console.log('About to display incorrect questions, count:', userIncorrectQuestions.length);
     displayIncorrectQuestions();
 }
     
