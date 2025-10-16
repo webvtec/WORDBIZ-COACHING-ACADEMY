@@ -659,6 +659,27 @@
     line-height: 40px;
     text-align: center;
 }
+
+        .favorite-btn {
+    background: #ffd700;
+    color: #0d3b66;
+    border: 2px solid #0d3b66;
+    padding: 8px 20px;
+    border-radius: 5px;
+    font-weight: bold;
+    cursor: pointer;
+    margin-top: 15px;
+    font-family: Georgia, serif;
+}
+
+.favorite-btn:hover {
+    background: #ffed4e;
+}
+
+.favorite-btn.added {
+    background: #0d3b66;
+    color: white;
+}
     </style>
 </head>
 <body>
@@ -801,13 +822,24 @@
         </div>
 
         <!-- Practice Quiz Mode -->
-        <div id="practice-quiz-mode" class="quiz-mode active">
-            <div class="welcome-section">
-                <h2>🎯 Practice Quiz</h2>
-                <button class="practice-btn" onclick="startPracticeQuiz()">Start Practice Quiz</button>
-            </div>
-            <div id="practice-quiz-container"></div>
+<div id="practice-quiz-mode" class="quiz-mode active">
+    <div class="welcome-section">
+        <h2>🎯 Practice Quiz</h2>
+        <p style="margin: 15px 0;">Choose your quiz type:</p>
+        <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-bottom: 20px;">
+            <button class="practice-btn" onclick="startPracticeQuiz(5)">5 Questions</button>
+            <button class="practice-btn" onclick="startPracticeQuiz(10)">10 Questions</button>
+            <button class="practice-btn" onclick="startPracticeQuiz(15)">15 Questions</button>
         </div>
+        <div id="favorites-info" style="margin-top: 20px; padding: 15px; background: #f0f0f0; border-radius: 8px;">
+            <strong>⭐ Favorites:</strong> <span id="favorites-count">0</span> words saved
+            <button class="practice-btn" id="practice-favorites-btn" onclick="startFavoritesQuiz()" style="margin-left: 15px; padding: 10px 20px; font-size: 0.95rem;" disabled>
+                Practice Favorites (Need 5+)
+            </button>
+        </div>
+    </div>
+    <div id="practice-quiz-container"></div>
+</div>
 
         <!-- Live Quiz Mode -->
         <div id="live-quiz-mode" class="quiz-mode">
@@ -847,12 +879,14 @@
         // ===== CLOUD FUNCTION URL =====
         const CLOUD_FUNCTION_URL = 'https://getworddefinition-998744778737.us-central1.run.app';
         
-        // ===== GLOBAL VARIABLES =====
-        let allWords = [];
-        let currentLetter = '';
-        let currentWord = null;
-        let isListening = false;
-        let recognition = null;
+      // ===== GLOBAL VARIABLES =====
+let allWords = [];
+let currentLetter = '';
+let currentWord = null;
+let isListening = false;
+let recognition = null;
+let currentUser = null; 
+let favoriteWords = [];
 
         // ===== INITIALIZE =====
         document.addEventListener('DOMContentLoaded', function() {
@@ -865,6 +899,154 @@
             });
         });
 
+
+        // ===== AUTHENTICATION =====
+auth.onAuthStateChanged((user) => {
+    if (user) {
+        currentUser = user;
+        console.log('User signed in:', user.email);
+        updateUIForSignedInUser();
+        loadUserFavorites();
+    } else {
+        currentUser = null;
+        console.log('User signed out');
+        updateUIForSignedOutUser();
+        favoriteWords = [];
+    }
+});
+
+function updateUIForSignedInUser() {
+    const signInBtn = document.querySelector('.sidebar-item.sign-in');
+    if (signInBtn) {
+        signInBtn.textContent = 'SIGN OUT';
+        signInBtn.onclick = signOut;
+    }
+    updateFavoritesCount();
+}
+
+function updateUIForSignedOutUser() {
+    const signInBtn = document.querySelector('.sidebar-item.sign-in');
+    if (signInBtn) {
+        signInBtn.textContent = 'SIGN IN';
+        signInBtn.onclick = showSignInModal;
+    }
+    updateFavoritesCount();
+}
+
+function showSignInModal() {
+    const modalHTML = `
+        <div class="modal active" id="authModal">
+            <div class="modal-content" style="max-width: 450px;">
+                <div class="modal-header">
+                    <h2 class="modal-title" id="authTitle">Sign In</h2>
+                    <button class="modal-close" onclick="closeAuthModal()">×</button>
+                </div>
+                <div class="modal-body">
+                    <div id="signInForm">
+                        <input type="email" id="signInEmail" placeholder="Email" style="width: 100%; padding: 12px; margin: 10px 0; border: 2px solid #0d3b66; border-radius: 5px; font-family: Georgia, serif;">
+                        <input type="password" id="signInPassword" placeholder="Password" style="width: 100%; padding: 12px; margin: 10px 0; border: 2px solid #0d3b66; border-radius: 5px; font-family: Georgia, serif;">
+                        <button class="practice-btn" onclick="signIn()" style="width: 100%; margin: 10px 0;">Sign In</button>
+                        <p style="text-align: center; margin: 20px 0;">Don't have an account? <a href="#" onclick="switchToSignUp()" style="color: #0d3b66; font-weight: bold;">Sign Up</a></p>
+                    </div>
+                    
+                    <div id="signUpForm" style="display: none;">
+                        <input type="text" id="signUpName" placeholder="Full Name" style="width: 100%; padding: 12px; margin: 10px 0; border: 2px solid #0d3b66; border-radius: 5px; font-family: Georgia, serif;">
+                        <input type="email" id="signUpEmail" placeholder="Email" style="width: 100%; padding: 12px; margin: 10px 0; border: 2px solid #0d3b66; border-radius: 5px; font-family: Georgia, serif;">
+                        <input type="password" id="signUpPassword" placeholder="Password (min 6 characters)" style="width: 100%; padding: 12px; margin: 10px 0; border: 2px solid #0d3b66; border-radius: 5px; font-family: Georgia, serif;">
+                        <button class="practice-btn" onclick="signUp()" style="width: 100%; margin: 10px 0;">Sign Up</button>
+                        <p style="text-align: center; margin: 20px 0;">Already have an account? <a href="#" onclick="switchToSignIn()" style="color: #0d3b66; font-weight: bold;">Sign In</a></p>
+                    </div>
+                    
+                    <div id="authFeedback" style="margin-top: 15px;"></div>
+                </div>
+            </div>
+        </div>
+    `;
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+    toggleSidebar(); // Close sidebar when opening auth modal
+}
+
+function closeAuthModal() {
+    const authModal = document.getElementById('authModal');
+    if (authModal) authModal.remove();
+}
+
+function switchToSignUp() {
+    document.getElementById('signInForm').style.display = 'none';
+    document.getElementById('signUpForm').style.display = 'block';
+    document.getElementById('authTitle').textContent = 'Sign Up';
+}
+
+function switchToSignIn() {
+    document.getElementById('signUpForm').style.display = 'none';
+    document.getElementById('signInForm').style.display = 'block';
+    document.getElementById('authTitle').textContent = 'Sign In';
+}
+
+async function signIn() {
+    const email = document.getElementById('signInEmail').value;
+    const password = document.getElementById('signInPassword').value;
+    const feedback = document.getElementById('authFeedback');
+    
+    if (!email || !password) {
+        feedback.innerHTML = '<div class="feedback error">Please fill in all fields</div>';
+        return;
+    }
+    
+    try {
+        await auth.signInWithEmailAndPassword(email, password);
+        feedback.innerHTML = '<div class="feedback success">✅ Signed in successfully!</div>';
+        setTimeout(closeAuthModal, 1000);
+    } catch (error) {
+        feedback.innerHTML = `<div class="feedback error">❌ ${error.message}</div>`;
+    }
+}
+
+async function signUp() {
+    const name = document.getElementById('signUpName').value;
+    const email = document.getElementById('signUpEmail').value;
+    const password = document.getElementById('signUpPassword').value;
+    const feedback = document.getElementById('authFeedback');
+    
+    if (!name || !email || !password) {
+        feedback.innerHTML = '<div class="feedback error">Please fill in all fields</div>';
+        return;
+    }
+    
+    if (password.length < 6) {
+        feedback.innerHTML = '<div class="feedback error">Password must be at least 6 characters</div>';
+        return;
+    }
+    
+    try {
+        const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+        
+        // Create user profile in Firestore
+        await db.collection('users').doc(userCredential.user.uid).set({
+            name: name,
+            email: email,
+            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+            favorites: []
+        });
+        
+        feedback.innerHTML = '<div class="feedback success">✅ Account created successfully!</div>';
+        setTimeout(closeAuthModal, 1000);
+    } catch (error) {
+        feedback.innerHTML = `<div class="feedback error">❌ ${error.message}</div>`;
+    }
+}
+
+async function signOut() {
+    try {
+        await auth.signOut();
+        favoriteWords = [];
+        updateFavoritesCount();
+        navigateTo('home');
+    } catch (error) {
+        console.error('Sign out error:', error);
+    }
+}
+        
         // ===== NAVIGATION =====
         function navigateTo(section) {
             document.querySelectorAll('.content-section').forEach(sec => {
@@ -1437,18 +1619,17 @@ function switchQuizMode(mode) {
     }
 }
 
-        async function startPracticeQuiz() {
+     async function startPracticeQuiz(questionCount = 5) {
     document.getElementById('practice-quiz-container').innerHTML = '<div class="loading">🎲 Generating quiz questions...</div>';
     
-    // Get 5 random words from your database
+    // Get random words from your database
     const quizWords = [];
-    for (let i = 0; i < 5; i++) {
+    for (let i = 0; i < questionCount; i++) {
         const randomWord = allWords[Math.floor(Math.random() * allWords.length)];
         quizWords.push(randomWord);
     }
 
     try {
-        // Call Cloud Function with action parameter
         const response = await fetch(CLOUD_FUNCTION_URL, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -1472,6 +1653,79 @@ function switchQuizMode(mode) {
             '<div class="feedback error">Failed to generate quiz. Please try again.</div>';
     }
 }
+
+
+// Initialize favorites from localStorage
+let favoriteWords = JSON.parse(localStorage.getItem('favoriteWords') || '[]');
+
+// Update favorites count display
+function updateFavoritesCount() {
+    document.getElementById('favorites-count').textContent = favoriteWords.length;
+    const favBtn = document.getElementById('practice-favorites-btn');
+    if (favoriteWords.length >= 5) {
+        favBtn.disabled = false;
+        favBtn.textContent = `Practice Favorites (${favoriteWords.length})`;
+    } else {
+        favBtn.disabled = true;
+        favBtn.textContent = `Practice Favorites (Need ${5 - favoriteWords.length} more)`;
+    }
+}
+
+// Add word to favorites
+function addToFavorites(word) {
+    if (!favoriteWords.includes(word)) {
+        favoriteWords.push(word);
+        localStorage.setItem('favoriteWords', JSON.stringify(favoriteWords));
+        updateFavoritesCount();
+        return true;
+    }
+    return false;
+}
+
+// Start quiz with favorites
+async function startFavoritesQuiz() {
+    if (favoriteWords.length < 5) {
+        alert('You need at least 5 favorite words to practice!');
+        return;
+    }
+    
+    document.getElementById('practice-quiz-container').innerHTML = '<div class="loading">🎲 Generating quiz from your favorites...</div>';
+    
+    // Use all favorites or limit to 15
+    const quizWords = favoriteWords.slice(0, Math.min(15, favoriteWords.length));
+    
+    try {
+        const response = await fetch(CLOUD_FUNCTION_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+                data: { 
+                    action: 'generatePracticeQuiz',
+                    words: quizWords 
+                } 
+            })
+        });
+
+        const data = await response.json();
+        currentQuiz = data.result;
+        currentQuestionIndex = 0;
+        quizScore = 0;
+        
+        showQuestion();
+    } catch (error) {
+        console.error('Error generating quiz:', error);
+        document.getElementById('practice-quiz-container').innerHTML = 
+            '<div class="feedback error">Failed to generate quiz. Please try again.</div>';
+    }
+}
+
+// Call this when page loads to initialize the count
+document.addEventListener('DOMContentLoaded', function() {
+    // ... your existing DOMContentLoaded code ...
+    updateFavoritesCount();
+});
+
+        
 
 function showQuestion() {
     const question = currentQuiz.questions[currentQuestionIndex];
@@ -1500,15 +1754,31 @@ function checkAnswer(selectedIndex) {
     // Disable all options
     options.forEach(opt => opt.style.pointerEvents = 'none');
     
+    let isCorrect = false;
     if (selectedIndex === question.correctAnswer) {
         options[selectedIndex].classList.add('correct');
         quizScore++;
+        isCorrect = true;
     } else {
         options[selectedIndex].classList.add('wrong');
         options[question.correctAnswer].classList.add('correct');
+        
+        // Show "Add to Favorites" button for incorrect answer
+        const container = document.getElementById('practice-quiz-container');
+        const favoriteBtn = document.createElement('button');
+        favoriteBtn.className = 'favorite-btn';
+        favoriteBtn.textContent = '⭐ Add to Favorites';
+        favoriteBtn.onclick = () => {
+            if (addToFavorites(question.word)) {
+                favoriteBtn.textContent = '✅ Added to Favorites!';
+                favoriteBtn.classList.add('added');
+                favoriteBtn.disabled = true;
+            }
+        };
+        container.querySelector('.quiz-question-card').appendChild(favoriteBtn);
     }
     
-    // Move to next question after 2 seconds
+    // Move to next question after 3 seconds
     setTimeout(() => {
         currentQuestionIndex++;
         if (currentQuestionIndex < currentQuiz.questions.length) {
@@ -1516,7 +1786,7 @@ function checkAnswer(selectedIndex) {
         } else {
             showQuizResults();
         }
-    }, 2000);
+    }, 3000);
 }
 
 function showQuizResults() {
@@ -1532,11 +1802,17 @@ function showQuizResults() {
             <p style="font-size: 1.5rem; color: #0d3b66; margin: 20px 0;">
                 ${percentage >= 80 ? '🏆 Excellent!' : percentage >= 60 ? '👍 Good job!' : '📚 Keep practicing!'}
             </p>
-            <button class="practice-btn" onclick="startPracticeQuiz()">Try Again</button>
+            <p style="font-size: 1.1rem; margin: 20px 0;">
+                ⭐ You have ${favoriteWords.length} words in favorites
+                ${favoriteWords.length >= 5 ? ' - Ready to practice!' : ` - Add ${5 - favoriteWords.length} more to unlock favorites practice`}
+            </p>
+            <button class="practice-btn" onclick="startPracticeQuiz(5)">Try Again (5 Questions)</button>
+            <button class="practice-btn" onclick="startPracticeQuiz(10)">Try Again (10 Questions)</button>
         </div>
     `;
 }
 
+        
 function joinLiveTournament() {
     document.getElementById('live-quiz-container').innerHTML = 
         '<div class="loading">🔍 Looking for available tournaments...</div>';
