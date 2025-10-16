@@ -1797,60 +1797,89 @@ function navigateTo(section) {
         }
 
 
-        // ===== FAVORITES FUNCTIONS =====
-        async function loadUserFavorites(userId) {
-            try {
-                const snapshot = await db.collection('users').doc(userId).collection('favorites').get();
-                userFavorites = [];
-                snapshot.forEach(doc => {
-                    userFavorites.push(doc.data());
-                });
-                console.log(`Loaded ${userFavorites.length} favorites`);
-            } catch (error) {
-                console.error('Error loading favorites:', error);
-            }
-        }
+       // ===== SIMPLIFIED FAVORITES FUNCTIONS =====
+async function loadUserFavorites(userId) {
+    try {
+        const snapshot = await db.collection('users').doc(userId).collection('favorites').get();
+        userFavorites = [];
+        snapshot.forEach(doc => {
+            userFavorites.push({ id: doc.id, ...doc.data() });
+        });
+        console.log(`Loaded ${userFavorites.length} favorites`);
+    } catch (error) {
+        console.error('Error loading favorites:', error);
+    }
+}
 
-        async function addToFavorites(word, definition) {
-            if (!currentUser) {
-                alert('Please sign in to add favorites');
-                showAuthModal();
-                return;
-            }
+async function quickAddToFavorites(word, definition, buttonElement) {
+    if (!currentUser) {
+        alert('Please sign in to add favorites');
+        showAuthModal();
+        return;
+    }
 
-            try {
-                await db.collection('users').doc(currentUser.uid).collection('favorites').doc(word).set({
-                    word: word,
-                    definition: definition,
-                    addedAt: firebase.firestore.FieldValue.serverTimestamp()
-                });
+    try {
+        await db.collection('users').doc(currentUser.uid).collection('favorites').doc(word).set({
+            word: word,
+            definition: definition,
+            addedAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
 
-                userFavorites.push({ word, definition });
-                return true;
-            } catch (error) {
-                console.error('Error adding to favorites:', error);
-                return false;
-            }
-        }
+        buttonElement.textContent = '✅ Added!';
+        buttonElement.style.background = '#28a745';
+        buttonElement.disabled = true;
+        
+        await loadUserFavorites(currentUser.uid);
+        console.log('Added to favorites:', word);
+    } catch (error) {
+        console.error('Error adding to favorites:', error);
+        alert('Failed to add to favorites');
+    }
+}
 
-        async function removeFromFavorites(word) {
-            if (!currentUser) return;
+async function displayFavorites() {
+    const container = document.getElementById('favorites-container');
 
-            try {
-                await db.collection('users').doc(currentUser.uid).collection('favorites').doc(word).delete();
-                userFavorites = userFavorites.filter(fav => fav.word !== word);
-                
-                // Refresh favorites display if on that page
-                if (document.getElementById('favorites-section').classList.contains('active')) {
-                    displayFavorites();
-                }
-                return true;
-            } catch (error) {
-                console.error('Error removing from favorites:', error);
-                return false;
-            }
-        }
+    if (!currentUser) {
+        container.innerHTML = `
+            <p style="margin-bottom: 20px;">Sign in to save your favorite words and practice them anytime!</p>
+            <button class="practice-btn" onclick="showAuthModal()">Sign In / Sign Up</button>
+        `;
+        return;
+    }
 
+    await loadUserFavorites(currentUser.uid);
+
+    if (userFavorites.length === 0) {
+        container.innerHTML = '<p>No favorites yet. Add words during quiz by clicking the ⭐ button!</p>';
+        return;
+    }
+
+    container.innerHTML = `
+        <div class="word-list" style="margin-top: 20px;">
+            ${userFavorites.map(fav => `
+                <div class="word-card">
+                    <div class="word-title">
+                        <span>${fav.word}</span>
+                        <button class="remove-favorite" onclick="removeFavorite('${fav.id}')">Remove</button>
+                    </div>
+                    <div class="word-definition">${fav.definition}</div>
+                </div>
+            `).join('')}
+        </div>
+    `;
+}
+
+async function removeFavorite(favoriteId) {
+    if (!currentUser) return;
+
+    try {
+        await db.collection('users').doc(currentUser.uid).collection('favorites').doc(favoriteId).delete();
+        displayFavorites();
+    } catch (error) {
+        console.error('Error removing favorite:', error);
+    }
+}
 async function displayFavorites() {
             const container = document.getElementById('favorites-container');
 
@@ -2030,24 +2059,7 @@ function checkAnswer(selectedIndex) {
         
         // Automatically save incorrect answer
         if (currentUser) {
-            saveIncorrectQuestion(question, 'practice'); // Change to 'live' for live quizzes
-        }
-        
-        // Show add to favorites button for incorrect answers
-        if (currentUser) {
-            const container = document.querySelector('.quiz-question-card');
-            const favoriteBtn = document.createElement('button');
-            favoriteBtn.className = 'favorite-btn';
-            favoriteBtn.textContent = '⭐ Add to Favorites';
-            favoriteBtn.onclick = async () => {
-                const success = await addToFavorites(question.word, question.correctDefinition || question.options[question.correctAnswer]);
-                if (success) {
-                    favoriteBtn.textContent = '✅ Added to Favorites';
-                    favoriteBtn.classList.add('added');
-                    favoriteBtn.disabled = true;
-                }
-            };
-            container.appendChild(favoriteBtn);
+            saveIncorrectQuestion(question, 'practice');
         }
     }
     
@@ -2062,20 +2074,27 @@ function checkAnswer(selectedIndex) {
     }, 3000);
 }
         
-function showQuizResults() {
+function showQuestion() {
+    const question = currentQuiz.questions[currentQuestionIndex];
     const container = document.getElementById('practice-quiz-container');
-    const percentage = Math.round((quizScore / currentQuiz.questions.length) * 100);
     
     container.innerHTML = `
-        <div class="quiz-question-card" style="text-align: center;">
-            <h2>🎉 Quiz Complete!</h2>
-            <div class="quiz-score" style="font-size: 3rem; margin: 30px 0;">
-                ${quizScore} / ${currentQuiz.questions.length}
+        <div class="quiz-question-card">
+            <div class="quiz-score">Score: ${quizScore} / ${currentQuestionIndex}</div>
+            <h3>Question ${currentQuestionIndex + 1} of ${currentQuiz.questions.length}</h3>
+            <p style="font-size: 1.3rem; margin: 20px 0;"><strong>${question.question}</strong></p>
+            <div class="quiz-options">
+                ${question.options.map((option, index) => `
+                    <div class="quiz-option" onclick="checkAnswer(${index})">
+                        ${option}
+                    </div>
+                `).join('')}
             </div>
-            <p style="font-size: 1.5rem; color: #0d3b66; margin: 20px 0;">
-                ${percentage >= 80 ? '🏆 Excellent!' : percentage >= 60 ? '👍 Good job!' : '📚 Keep practicing!'}
-            </p>
-            <button class="practice-btn" onclick="startPracticeQuiz()">Try Again</button>
+            ${currentUser ? `
+                <button class="favorite-btn" onclick="event.stopPropagation(); quickAddToFavorites('${question.word}', '${(question.correctDefinition || question.options[question.correctAnswer]).replace(/'/g, "\\'")}', this)" style="margin-top: 20px;">
+                    ⭐ Add to Favorites
+                </button>
+            ` : ''}
         </div>
     `;
 }
