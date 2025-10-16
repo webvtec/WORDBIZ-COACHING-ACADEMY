@@ -1983,25 +1983,6 @@ function switchQuizMode(mode) {
     }
 }
 
-function showQuestion() {
-    const question = currentQuiz.questions[currentQuestionIndex];
-    const container = document.getElementById('practice-quiz-container');
-    
-    container.innerHTML = `
-        <div class="quiz-question-card">
-            <div class="quiz-score">Score: ${quizScore} / ${currentQuestionIndex}</div>
-            <h3>Question ${currentQuestionIndex + 1} of ${currentQuiz.questions.length}</h3>
-            <p style="font-size: 1.3rem; margin: 20px 0;"><strong>${question.question}</strong></p>
-            <div class="quiz-options">
-                ${question.options.map((option, index) => `
-                    <div class="quiz-option" onclick="checkAnswer(${index})">
-                        ${option}
-                    </div>
-                `).join('')}
-            </div>
-        </div>
-    `;
-}
 
 function checkAnswer(selectedIndex) {
     const question = currentQuiz.questions[currentQuestionIndex];
