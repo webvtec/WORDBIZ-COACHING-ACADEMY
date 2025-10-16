@@ -2214,32 +2214,39 @@ async function loadIncorrectQuestions(userId) {
     }
 }
 
-async function displayFavorites() {
-    const container = document.getElementById('favorites-container');
+async function displayIncorrectQuestions() {
+    const container = document.getElementById('incorrect-quiz-container');
 
     if (!currentUser) {
         container.innerHTML = `
-            <p style="margin-bottom: 20px;">Sign in to save your favorite words and practice them anytime!</p>
+            <p style="margin-bottom: 20px;">Sign in to track your incorrect quiz answers!</p>
             <button class="practice-btn" onclick="showAuthModal()">Sign In / Sign Up</button>
         `;
         return;
     }
 
-    if (userFavorites.length === 0) {
-        container.innerHTML = '<p>No favorites yet. Add words during quiz by clicking the ⭐ button!</p>';
+    let filtered = userIncorrectQuestions;
+    if (currentIncorrectFilter !== 'all') {
+        filtered = userIncorrectQuestions.filter(q => q.quizType === currentIncorrectFilter);
+    }
+
+    if (filtered.length === 0) {
+        container.innerHTML = '<p>No incorrect answers yet. Keep practicing!</p>';
         return;
     }
 
     container.innerHTML = `
-        <button class="practice-btn" onclick="practiceFavorites()" style="margin-bottom: 20px;">🎯 Practice All Favorites</button>
+        <button class="practice-btn" onclick="practiceIncorrectQuestions()">🎯 Practice All Incorrect Answers</button>
         <div class="word-list" style="margin-top: 20px;">
-            ${userFavorites.map(fav => `
+            ${filtered.map(q => `
                 <div class="word-card">
                     <div class="word-title">
-                        <span>${fav.word}</span>
-                        <button class="remove-favorite" onclick="removeFavorite('${fav.id}')">Remove</button>
+                        <span>${q.word}</span>
+                        <span style="font-size: 0.9rem; color: #666;">${q.quizType === 'practice' ? '📝 Practice' : '🏆 Live'}</span>
                     </div>
-                    <div class="word-definition">${fav.definition}</div>
+                    <div class="word-definition"><strong>Q:</strong> ${q.question}</div>
+                    <div class="word-definition"><strong>✅ Answer:</strong> ${q.correctDefinition}</div>
+                    <button class="remove-favorite" onclick="removeIncorrectQuestion('${q.id}')">Remove</button>
                 </div>
             `).join('')}
         </div>
