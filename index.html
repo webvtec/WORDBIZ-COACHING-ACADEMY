@@ -1797,7 +1797,7 @@ function navigateTo(section) {
         }
 
 
-       // ===== SIMPLIFIED FAVORITES FUNCTIONS =====
+   // ===== SIMPLIFIED FAVORITES FUNCTIONS WITH PRACTICE =====
 async function loadUserFavorites(userId) {
     try {
         const snapshot = await db.collection('users').doc(userId).collection('favorites').get();
@@ -1856,6 +1856,7 @@ async function displayFavorites() {
     }
 
     container.innerHTML = `
+        <button class="practice-btn" onclick="practiceFavorites()" style="margin-bottom: 20px;">🎯 Practice All Favorites</button>
         <div class="word-list" style="margin-top: 20px;">
             ${userFavorites.map(fav => `
                 <div class="word-card">
@@ -1880,84 +1881,45 @@ async function removeFavorite(favoriteId) {
         console.error('Error removing favorite:', error);
     }
 }
-async function displayFavorites() {
-            const container = document.getElementById('favorites-container');
 
-            if (!currentUser) {
-                container.innerHTML = `
-                    <p style="margin-bottom: 20px;">Sign in to save your favorite words and practice them anytime!</p>
-                    <button class="practice-btn" onclick="showAuthModal()">Sign In / Sign Up</button>
-                `;
-                return;
-            }
+async function practiceFavorites() {
+    if (userFavorites.length === 0) {
+        alert('No favorites to practice!');
+        return;
+    }
 
-            if (userFavorites.length === 0) {
-                container.innerHTML = '<p>No favorites yet. Add words from quiz practice!</p>';
-                return;
-            }
+    // Switch to quiz section
+    navigateTo('quiz');
+    
+    // Get favorite words
+    const favoriteWords = userFavorites.map(fav => fav.word).slice(0, 5);
+    
+    document.getElementById('practice-quiz-container').innerHTML = '<div class="loading">🎲 Creating quiz from your favorites...</div>';
 
-            container.innerHTML = `
-                <button class="practice-btn" onclick="practiceFavorites()">🎯 Practice All Favorites</button>
-                <div class="word-list" style="margin-top: 20px;">
-                    ${userFavorites.map(fav => `
-                        <div class="word-card">
-                            <div class="word-title">
-                                <span>${fav.word}</span>
-                                <button class="remove-favorite" onclick="removeFromFavorites('${fav.word}')">Remove</button>
-                            </div>
-                            <div class="word-definition">${fav.definition}</div>
-                        </div>
-                    `).join('')}
-                </div>
-            `;
-        }
+    try {
+        const response = await fetch(CLOUD_FUNCTION_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+                data: { 
+                    action: 'generatePracticeQuiz',
+                    words: favoriteWords 
+                } 
+            })
+        });
+
+        const data = await response.json();
+        currentQuiz = data.result;
+        currentQuestionIndex = 0;
+        quizScore = 0;
         
-        async function practiceFavorites() {
-            if (userFavorites.length === 0) {
-                alert('No favorites to practice!');
-                return;
-            }
-
-            // Switch to quiz section and start a favorites quiz
-            navigateTo('quiz');
-            startFavoritesQuiz();
-        }
-
-        async function startFavoritesQuiz() {
-            if (userFavorites.length === 0) {
-                alert('No favorites to practice!');
-                return;
-            }
-
-            document.getElementById('practice-quiz-container').innerHTML = '<div class="loading">🎲 Creating quiz from your favorites...</div>';
-
-            const quizWords = userFavorites.map(fav => fav.word).slice(0, 5);
-
-            try {
-                const response = await fetch(CLOUD_FUNCTION_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ 
-                        data: { 
-                            action: 'generatePracticeQuiz',
-                            words: quizWords 
-                        } 
-                    })
-                });
-
-                const data = await response.json();
-                currentQuiz = data.result;
-                currentQuestionIndex = 0;
-                quizScore = 0;
-                
-                showQuestion();
-            } catch (error) {
-                console.error('Error generating favorites quiz:', error);
-                document.getElementById('practice-quiz-container').innerHTML = 
-                    '<div class="feedback error">Failed to generate quiz. Please try again.</div>';
-            }
-        }
-
+        showQuestion();
+    } catch (error) {
+        console.error('Error generating favorites quiz:', error);
+        document.getElementById('practice-quiz-container').innerHTML = 
+            '<div class="feedback error">Failed to generate quiz. Please try again.</div>';
+    }
+}
         // ===== QUIZ FUNCTIONS =====
 let currentQuiz = null;
 let currentQuestionIndex = 0;
