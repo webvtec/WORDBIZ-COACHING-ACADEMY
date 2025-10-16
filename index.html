@@ -1876,9 +1876,10 @@
             showQuestion('favorites');
         }
 
-        async function loadUserIncorrect(userId) {
+        
+      async function loadUserIncorrect(userId) {
             try {
-                const snapshot = await db.collection('users').doc(userId).collection('incorrect').get();
+                const snapshot = await db.collection('users').doc(userId).collection('incorrectQuestions').get();
                 userIncorrect = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 displayIncorrect();
             } catch (error) {
@@ -1889,7 +1890,7 @@
         async function saveIncorrectQuestion(question, quizType) {
             if (!currentUser) return;
 
-            const incorrectRef = db.collection('users').doc(currentUser.uid).collection('incorrect');
+            const incorrectRef = db.collection('users').doc(currentUser.uid).collection('incorrectQuestions');
             
             await incorrectRef.add({
                 word: question.word,
@@ -1958,7 +1959,7 @@
         async function removeIncorrect(id) {
             if (!currentUser) return;
 
-            await db.collection('users').doc(currentUser.uid).collection('incorrect').doc(id).delete();
+            await db.collection('users').doc(currentUser.uid).collection('incorrectQuestions').doc(id).delete();
             userIncorrect = userIncorrect.filter(inc => inc.id !== id);
             displayIncorrect();
         }
