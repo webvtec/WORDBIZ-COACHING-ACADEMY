@@ -1077,32 +1077,22 @@
         </div>
     </div>
 
-    <!-- Favorites Section -->
-    <div id="favorites-section" class="content-section">
-        <div class="word-database">
-            <div class="database-header">
-                <h2>⭐ My Favorites</h2>
-            </div>
-            <div id="favorites-container" class="welcome-section">
-                <p>Loading your favorites...</p>
-            </div>
-        </div>
-    </div>
+ <!-- Favorites Section -->
+<div id="favorites-section" class="content-section">
+  <div class="welcome-section">
+    <h1>My Favorites</h1>
+    <p>Your favorited words will appear here. (Add UI to list saved favorites.)</p>
+    <div id="favoritesList">No favorites yet.</div>
+  </div>
+</div>
 
-        <!-- Incorrect Quiz Questions Section -->
+<!-- Incorrect Quiz Questions Section -->
 <div id="incorrect-quiz-section" class="content-section">
-    <div class="word-database">
-        <div class="database-header">
-            <h2>Incorrect Quiz Questions</h2>
-            <div style="display: flex; gap: 10px;">
-                <button class="practice-btn" onclick="filterIncorrectQuiz('practice')">📝 Practice Quiz</button>
-                <button class="practice-btn" onclick="filterIncorrectQuiz('live')">🏆 Live Quiz</button>
-            </div>
-        </div>
-        <div id="incorrect-quiz-container" class="welcome-section">
-            <p>Loading your incorrect answers...</p>
-        </div>
-    </div>
+  <div class="welcome-section">
+    <h1>Incorrect Quiz Questions</h1>
+    <p>Questions you got wrong will appear here for review.</p>
+    <div id="incorrectQuizList">No incorrect questions yet.</div>
+  </div>
 </div>
     <script>
         // ===== FIREBASE CONFIGURATION =====
