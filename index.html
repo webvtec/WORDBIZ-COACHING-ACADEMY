@@ -36,18 +36,20 @@
 
         .top-bar {
             display: flex;
-            justify-content: space-between;
+            flex-direction: column;
             align-items: center;
             padding: 12px 20px;
             border-bottom: 2px solid rgba(255,255,255,0.2);
             width: 100%;
+            gap: 10px;
         }
 
         .left-section {
             display: flex;
             align-items: center;
+            justify-content: space-between;
             gap: 20px;
-            flex: 1;
+            width: 100%;
         }
 
         .menu-icon {
@@ -68,13 +70,15 @@
             border-radius: 2px;
         }
 
-        .logo {
+       .logo {
             font-size: 1.6rem;
             font-weight: bold;
             font-style: italic;
             color: white;
             letter-spacing: 2px;
             white-space: nowrap;
+            text-align: center;
+            width: 100%;
         }
 
         .nav-bar {
@@ -832,28 +836,29 @@
         <div class="sidebar-item" onclick="navigateTo('incorrect-quiz')">Incorrect Quiz</div>
         <div class="sidebar-item" onclick="navigateTo('about')">About Us</div>
         <div class="sidebar-item" onclick="navigateTo('settings')">Settings</div>
+        <div class="sidebar-item sign-in" id="sidebar-signin" onclick="showAuthModal()">SIGN IN</div>
         <div class="sidebar-item" id="sidebar-signout" style="display:none;" onclick="signOut()">Sign Out</div>
-        <div class="sidebar-item sign-in" onclick="showAuthModal()">SIGN IN</div>
     </div>
 
 
   
     <!-- Header -->
     <header class="header">
-        <div class="top-bar">
+       <div class="top-bar">
+            <div class="logo">WORD BIZ COACHING ACADEMY</div>
             <div class="left-section">
                 <div class="menu-icon" onclick="toggleSidebar()">
                     <span></span>
                     <span></span>
                     <span></span>
                 </div>
-                <div class="logo">WORD BIZ COACHING ACADEMY</div>
-            </div>
-            <div class="user-info" id="userInfo">
-                <div class="user-avatar" id="userAvatar">?</div>
-                <span id="userName">Guest</span>
+                <div class="user-info" id="userInfo">
+                    <div class="user-avatar" id="userAvatar">?</div>
+                    <span id="userName">Guest</span>
+                </div>
             </div>
         </div>
+        
         <nav class="nav-bar">
             <div class="nav-item" onclick="navigateTo('quiz')">QUIZ</div>
             <div class="nav-item">TOURNAMENTS</div>
@@ -988,7 +993,10 @@
                         <label>Password</label>
                         <input type="password" id="signin-password" required>
                     </div>
-                    <button type="submit" class="auth-submit">Sign In</button>
+                   <button type="submit" class="auth-submit">Sign In</button>
+                    <button type="button" class="auth-submit" onclick="signInWithGoogle()" style="background: #db4437; margin-top: 10px;">
+                        Sign In with Google
+                    </button>
                     <div id="signin-error" class="feedback error" style="display:none; margin-top:15px;"></div>
                 </form>
 
@@ -1007,7 +1015,10 @@
                         <input type="password" id="signup-password" required minlength="6">
                     </div>
                     <button type="submit" class="auth-submit">Sign Up</button>
-                    <div id="signup-error" class="feedback error" style="display:none; margin-top:15px;"></div>
+                    <button type="button" class="auth-submit" onclick="signInWithGoogle()" style="background: #db4437; margin-top: 10px;">
+                        Sign Up with Google
+                    </button>
+                    <div id="signup-error" class="feedback error" style="display:none; margin-top:15px;"></div>>
                 </form>
             </div>
         </div>
@@ -1070,6 +1081,13 @@
         
         // ===== NAVIGATION =====
         async function navigateTo(section) {
+            // Check if user needs to be logged in
+            if ((section === 'favorites' || section === 'incorrect-quiz') && !currentUser) {
+                alert('Please sign in to access this feature');
+                showAuthModal();
+                return;
+            }
+            
             document.querySelectorAll('.content-section').forEach(sec => {
                 sec.classList.remove('active');
             });
@@ -1665,6 +1683,32 @@
             navigateTo('home');
         }
 
+        async function signInWithGoogle() {
+            const provider = new firebase.auth.GoogleAuthProvider();
+            try {
+                const result = await auth.signInWithPopup(provider);
+                const user = result.user;
+                
+                // Create user document if it doesn't exist
+                const userRef = db.collection('users').doc(user.uid);
+                const userDoc = await userRef.get();
+                
+                if (!userDoc.exists) {
+                    await userRef.set({
+                        name: user.displayName,
+                        email: user.email,
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                }
+                
+                closeAuthModal();
+            } catch (error) {
+                console.error('Google sign-in error:', error);
+                document.getElementById('signin-error').textContent = error.message;
+                document.getElementById('signin-error').style.display = 'block';
+            }
+        }
+
         function updateUIForAuthenticatedUser(user) {
             const displayName = user.displayName || user.email.split('@')[0];
             document.getElementById('userName').textContent = displayName;
@@ -1826,16 +1870,22 @@
         }
 
         // ===== FAVORITES MANAGEMENT =====
-        async function loadUserFavorites(userId) {
+       async function loadUserFavorites(userId) {
             try {
                 const snapshot = await db.collection('users').doc(userId).collection('favorites').get();
-                userFavorites = snapshot.docs.map(doc => doc.data());
+                userFavorites = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 displayFavorites();
+                
+                // Enable quiz button if enough favorites
+                const btn = document.getElementById('favoritesQuizBtn');
+                if (btn) {
+                    btn.disabled = userFavorites.length < 5;
+                }
             } catch (error) {
                 console.error('Error loading favorites:', error);
             }
         }
-
+        
         async function toggleFavorite(word, definition, element) {
             if (!currentUser) {
                 alert('Please sign in to save favorites');
@@ -1971,11 +2021,17 @@
                 const snapshot = await db.collection('users').doc(userId).collection('incorrectQuestions').get();
                 userIncorrect = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 displayIncorrect();
+                
+                // Enable quiz button if enough incorrect answers
+                const btn = document.getElementById('incorrectQuizBtn');
+                if (btn) {
+                    btn.disabled = userIncorrect.length < 5;
+                }
             } catch (error) {
                 console.error('Error loading incorrect questions:', error);
             }
         }
-
+        
         async function saveIncorrectQuestion(question, quizType) {
             if (!currentUser) return;
 
