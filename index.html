@@ -1216,65 +1216,63 @@
 
         // ===== SHOW WORD DETAIL (CALL CLOUD FUNCTION) =====
         async function showWordDetail(word) {
-            currentWord = word;
+    currentWord = word;
+    
+    const modal = document.getElementById('wordModal');
+    document.getElementById('modalWord').textContent = word;
+    document.getElementById('modalPhonetic').textContent = 'Loading...';
+    document.getElementById('modalContent').innerHTML = '<div class="loading">📚 Loading definition...</div>';
+    
+    modal.classList.add('active');
+
+    try {
+        const wordRef = db.collection('dictionary').doc(word.toLowerCase());
+        const wordDoc = await wordRef.get();
+
+        if (wordDoc.exists) {
+            console.log('✅ Found in cache - no API call needed!');
+            const cachedData = wordDoc.data();
+            displayWordDetails(cachedData);
+        } else {
+            console.log('⚠️ Not in cache - calling paid API...');
             
-            const modal = document.getElementById('wordModal');
-            document.getElementById('modalWord').textContent = word;
-            document.getElementById('modalPhonetic').textContent = 'Loading...';
-            document.getElementById('modalContent').innerHTML = '<div class="loading">📚 Loading definition...</div>';
+            const response = await fetch(CLOUD_FUNCTION_URL, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ data: { word: word, action: 'getDefinition' } })
+            });
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(`API Error (${response.status}): ${errorText}`);
+            }
+
+            const data = await response.json();
             
-            modal.classList.add('active');
-
-            try {
-                const wordRef = db.collection('dictionary').doc(word.toLowerCase());
-                const wordDoc = await wordRef.get();
-
-                if (wordDoc.exists) {
-                    console.log('✅ Found in cache - no API call needed!');
-                    const cachedData = wordDoc.data();
-                    displayWordDetails(cachedData);
-                } else {
-                    console.log('⚠️ Not in cache - calling paid API...');
-                    
-                    const response = await fetch(CLOUD_FUNCTION_URL, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({ data: { word: word } })
-                    });
-
-                    if (!response.ok) {
-                        throw new Error(`API Error (${response.status})`);
-                    }
-
-                    const data = await response.json();
-                    
-                    if (data.result) {
-                        await wordRef.set({
-                            ...data.result,
-                            word: word.toLowerCase(),
-                            cachedAt: firebase.firestore.FieldValue.serverTimestamp()
-                        });
-                        console.log('✅ Saved to Firestore cache!');
-                        
-                        displayWordDetails(data.result);
-                    } else {
-                        throw new Error('No definition found in API response');
-                    }
-                }
-            } catch (error) {
-                console.error('❌ Error:', error);
-                document.getElementById('modalContent').innerHTML = `
-                    <div class="word-definition">
-                        ❌ <strong>Unable to fetch definition</strong><br><br>
-                        ${error.message}<br><br>
-                        You can still practice pronunciation using the buttons below.
-                    </div>
-                `;
-                document.getElementById('modalPhonetic').textContent = '';
+            if (data.result) {
+                // Note: We can't write to dictionary collection due to security rules
+                // Only the Cloud Function can write there
+                console.log('✅ Got definition from API');
+                
+                displayWordDetails(data.result);
+            } else {
+                throw new Error('No definition found in API response');
             }
         }
+    } catch (error) {
+        console.error('❌ Error:', error);
+        document.getElementById('modalContent').innerHTML = `
+            <div class="word-definition">
+                ❌ <strong>Unable to fetch definition</strong><br><br>
+                ${error.message}<br><br>
+                You can still practice pronunciation using the buttons below.
+            </div>
+        `;
+        document.getElementById('modalPhonetic').textContent = '';
+    }
+}
 
         // ===== DISPLAY WORD DETAILS =====
         function displayWordDetails(wordData) {
