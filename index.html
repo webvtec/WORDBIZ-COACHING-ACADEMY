@@ -1183,13 +1183,25 @@ function navigateTo(section) {
         }
     }
     
-    if (section === 'favorites') {
+   if (section === 'favorites') {
+    if (currentUser) {
+        loadUserFavorites(currentUser.uid).then(() => {
+            displayFavorites();
+        });
+    } else {
         displayFavorites();
     }
-    
-    if (section === 'incorrect-quiz') {
+}
+
+if (section === 'incorrect-quiz') {
+    if (currentUser) {
+        loadIncorrectQuestions(currentUser.uid).then(() => {
+            displayIncorrectQuestions();
+        });
+    } else {
         displayIncorrectQuestions();
     }
+}
     
     toggleSidebar();
 }
@@ -2121,7 +2133,7 @@ function loadLeaderboard() {
         }
 
 
-        // ===== INCORRECT QUIZ QUESTIONS FUNCTIONS =====
+  // ===== INCORRECT QUIZ QUESTIONS FUNCTIONS =====
 async function saveIncorrectQuestion(question, quizType) {
     if (!currentUser) return;
 
@@ -2143,12 +2155,13 @@ async function saveIncorrectQuestion(question, quizType) {
         console.error('Error saving incorrect question:', error);
     }
 }
-
-async function loadIncorrectQuestions() {
-    if (!currentUser) return;
-
+        
+async function loadIncorrectQuestions(userId) {
+    if (!userId && !currentUser) return;
+    const uid = userId || currentUser.uid;
+    
     try {
-        const snapshot = await db.collection('users').doc(currentUser.uid).collection('incorrectQuestions').get();
+       const snapshot = await db.collection('users').doc(uid).collection('incorrectQuestions').get();
         userIncorrectQuestions = [];
         snapshot.forEach(doc => {
             userIncorrectQuestions.push({ id: doc.id, ...doc.data() });
