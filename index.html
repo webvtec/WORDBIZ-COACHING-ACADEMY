@@ -702,8 +702,8 @@
         <!-- Home Section -->
         <div id="home-section" class="content-section active">
             <div class="welcome-section">
-                <h1>Welcome to WordBiz Coaching Academy</h1>
-                <p>Master over 15,000 English words with AI-powered definitions, synonyms, antonyms, and pronunciation practice.</p>
+                <h1>WELCOME TO WORDBIZ COACHIN ACADEMY</h1>
+                <p> Where children are comitted to striving for the absolute best and coaches are here commited to helping each and every child master over 15,000 English words with AI-Powered learning tools to ensure each child's knowledge is significantly boosted.</p>
             </div>
         </div>
 
@@ -711,7 +711,7 @@
         <div id="word-database-section" class="content-section">
             <div class="word-database">
                 <div class="database-header">
-                    <h2>📚 Word Database</h2>
+                    <h2>📚 WORD DATABASE</h2>
                     <div class="search-box">
                         <input type="text" id="searchInput" placeholder="Search for any word..." />
                         <button onclick="searchWord()">Search</button>
@@ -780,7 +780,7 @@
             <div class="modal-body">
                 <div id="modalContent"></div>
                 <div class="practice-section">
-                    <h3>🎤 Practice Pronunciation</h3>
+                    <h3>🎤 PRACTICE PRONOUNCIATION</h3>
                     <button class="practice-btn" onclick="speakWord()">🔊 Listen</button>
                     <button class="practice-btn" id="practiceBtn" onclick="startPractice()">🎤 Practice Speaking</button>
                     <div id="practiceFeedback"></div>
@@ -804,7 +804,6 @@
         <div id="practice-quiz-mode" class="quiz-mode active">
             <div class="welcome-section">
                 <h2>🎯 Practice Quiz</h2>
-                <p>Test your vocabulary skills with AI-generated questions!</p>
                 <button class="practice-btn" onclick="startPracticeQuiz()">Start Practice Quiz</button>
             </div>
             <div id="practice-quiz-container"></div>
@@ -883,12 +882,12 @@
                     loadWords().then(() => {
                         displayWords(allWords.slice(0, 100));
                         document.getElementById('statusMessage').innerHTML = 
-                            `✅ ${allWords.length.toLocaleString()} words loaded! Showing first 100. Select a letter to filter or search for specific words.`;
+                            `✅ ${allWords.length.toLocaleString()} WORDS LOADED! SELECT A LETTER TO FILTER OR SEARCH FOR SPECIFIC WORDS.`;
                     });
                 } else {
                     displayWords(allWords.slice(0, 100));
                     document.getElementById('statusMessage').innerHTML = 
-                        `✅ ${allWords.length.toLocaleString()} words loaded! Showing first 100. Select a letter to filter or search for specific words.`;
+                        `✅ ${allWords.length.toLocaleString()} WORDS LOADED! SELECT A LETTER TO FILTER OR SEARCH FOR SPECIFIC WORDS.`;
                 }
             }
 
