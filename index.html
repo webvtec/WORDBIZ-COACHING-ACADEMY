@@ -1153,9 +1153,10 @@ auth.onAuthStateChanged(user => {
     } else {
         currentUser = null;
         updateUIForGuestUser();
-    }
+     }
+    });
 });
-
+        
 // ===== NAVIGATION =====
 function navigateTo(section) {
     document.querySelectorAll('.content-section').forEach(sec => {
