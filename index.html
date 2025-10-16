@@ -845,8 +845,9 @@
         <div class="sidebar-item" onclick="navigateTo('about')">About Us</div>
         <div class="sidebar-item" onclick="navigateTo('settings')">Settings</div>
         <div class="sidebar-item sign-in" onclick="showAuthModal()">SIGN IN</div>
-        <div class="sidebar-item" onclick="navigateTo('favorites')">⭐ My Favorites</div>
-        <div class="sidebar-item" id="sidebar-signout" style="display:none;" onclick="signOut()">🚪 Sign Out</div>
+        <div class="sidebar-item" onclick="navigateTo('favorites')">My Favorites</div>
+        <div class="sidebar-item" onclick="navigateTo('incorrect-quiz')">Incorrect Quiz Questions</div>
+        <div class="sidebar-item" id="sidebar-signout" style="display:none;" onclick="signOut()">Sign Out</div>
     </div>
 
     <!-- Header -->
@@ -1087,6 +1088,22 @@
             </div>
         </div>
     </div>
+
+        <!-- Incorrect Quiz Questions Section -->
+<div id="incorrect-quiz-section" class="content-section">
+    <div class="word-database">
+        <div class="database-header">
+            <h2>Incorrect Quiz Questions</h2>
+            <div style="display: flex; gap: 10px;">
+                <button class="practice-btn" onclick="filterIncorrectQuiz('practice')">📝 Practice Quiz</button>
+                <button class="practice-btn" onclick="filterIncorrectQuiz('live')">🏆 Live Quiz</button>
+            </div>
+        </div>
+        <div id="incorrect-quiz-container" class="welcome-section">
+            <p>Loading your incorrect answers...</p>
+        </div>
+    </div>
+</div>
     <script>
         // ===== FIREBASE CONFIGURATION =====
         const firebaseConfig = {
@@ -1113,6 +1130,8 @@
         let recognition = null;
         let currentUser = null;
         let userFavorites = [];
+        let userIncorrectQuestions = [];
+        let currentIncorrectFilter = 'all'; 
 
         // ===== INITIALIZE =====
        document.addEventListener('DOMContentLoaded', function() {
@@ -1125,50 +1144,54 @@
             });
 
             // Listen for auth state changes
-            auth.onAuthStateChanged(user => {
-                if (user) {
-                    currentUser = user;
-                    updateUIForAuthenticatedUser(user);
-                    loadUserFavorites(user.uid);
-                } else {
-                    currentUser = null;
-                    updateUIForGuestUser();
-                }
-            });
-        });
+auth.onAuthStateChanged(user => {
+    if (user) {
+        currentUser = user;
+        updateUIForAuthenticatedUser(user);
+        loadUserFavorites(user.uid);
+        loadIncorrectQuestions(user.uid);
+    } else {
+        currentUser = null;
+        updateUIForGuestUser();
+    }
+});
 
 // ===== NAVIGATION =====
-        function navigateTo(section) {
-            document.querySelectorAll('.content-section').forEach(sec => {
-                sec.classList.remove('active');
+function navigateTo(section) {
+    document.querySelectorAll('.content-section').forEach(sec => {
+        sec.classList.remove('active');
+    });
+    
+    const sectionId = section + '-section';
+    const targetSection = document.getElementById(sectionId);
+    if (targetSection) {
+        targetSection.classList.add('active');
+    }
+    
+    if (section === 'word-database') {
+        if (allWords.length === 0) {
+            loadWords().then(() => {
+                displayWords(allWords.slice(0, 100));
+                document.getElementById('statusMessage').innerHTML = 
+                    `✅ ${allWords.length.toLocaleString()} WORDS LOADED! SELECT A LETTER TO FILTER OR SEARCH FOR SPECIFIC WORDS.`;
             });
-
-            const sectionId = section + '-section';
-            const targetSection = document.getElementById(sectionId);
-            if (targetSection) {
-                targetSection.classList.add('active');
-            }
-
-            if (section === 'word-database') {
-                if (allWords.length === 0) {
-                    loadWords().then(() => {
-                        displayWords(allWords.slice(0, 100));
-                        document.getElementById('statusMessage').innerHTML = 
-                            `✅ ${allWords.length.toLocaleString()} WORDS LOADED! SELECT A LETTER TO FILTER OR SEARCH FOR SPECIFIC WORDS.`;
-                    });
-                } else {
-                    displayWords(allWords.slice(0, 100));
-                    document.getElementById('statusMessage').innerHTML = 
-                        `✅ ${allWords.length.toLocaleString()} WORDS LOADED! SELECT A LETTER TO FILTER OR SEARCH FOR SPECIFIC WORDS.`;
-                }
-            }
-
-            if (section === 'favorites') {
-                displayFavorites();
-            }
-
-            toggleSidebar();
+        } else {
+            displayWords(allWords.slice(0, 100));
+            document.getElementById('statusMessage').innerHTML = 
+                `✅ ${allWords.length.toLocaleString()} WORDS LOADED! SELECT A LETTER TO FILTER OR SEARCH FOR SPECIFIC WORDS.`;
         }
+    }
+    
+    if (section === 'favorites') {
+        displayFavorites();
+    }
+    
+    if (section === 'incorrect-quiz') {
+        displayIncorrectQuestions();
+    }
+    
+    toggleSidebar();
+}
         function toggleSidebar() {
             const sidebar = document.getElementById('sidebar');
             const overlay = document.getElementById('overlay');
@@ -2004,6 +2027,11 @@ function checkAnswer(selectedIndex) {
         options[selectedIndex].classList.add('wrong');
         options[question.correctAnswer].classList.add('correct');
         
+        // Automatically save incorrect answer
+        if (currentUser) {
+            saveIncorrectQuestion(question, 'practice'); // Change to 'live' for live quizzes
+        }
+        
         // Show add to favorites button for incorrect answers
         if (currentUser) {
             const container = document.querySelector('.quiz-question-card');
@@ -2032,6 +2060,7 @@ function checkAnswer(selectedIndex) {
         }
     }, 3000);
 }
+        
 function showQuizResults() {
     const container = document.getElementById('practice-quiz-container');
     const percentage = Math.round((quizScore / currentQuiz.questions.length) * 100);
@@ -2127,6 +2156,120 @@ function loadLeaderboard() {
                 errorDiv.style.display = 'block';
             }
         }
+
+
+        // ===== INCORRECT QUIZ QUESTIONS FUNCTIONS =====
+async function saveIncorrectQuestion(question, quizType) {
+    if (!currentUser) return;
+
+    try {
+        const incorrectRef = db.collection('users').doc(currentUser.uid).collection('incorrectQuestions');
+        await incorrectRef.add({
+            word: question.word,
+            question: question.question,
+            options: question.options,
+            correctAnswer: question.correctAnswer,
+            correctDefinition: question.correctDefinition || question.options[question.correctAnswer],
+            userAnswer: null, // You can track this if needed
+            quizType: quizType, // 'practice' or 'live'
+            addedAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+
+        console.log('Saved incorrect question');
+    } catch (error) {
+        console.error('Error saving incorrect question:', error);
+    }
+}
+
+async function loadIncorrectQuestions() {
+    if (!currentUser) return;
+
+    try {
+        const snapshot = await db.collection('users').doc(currentUser.uid).collection('incorrectQuestions').get();
+        userIncorrectQuestions = [];
+        snapshot.forEach(doc => {
+            userIncorrectQuestions.push({ id: doc.id, ...doc.data() });
+        });
+        console.log(`Loaded ${userIncorrectQuestions.length} incorrect questions`);
+    } catch (error) {
+        console.error('Error loading incorrect questions:', error);
+    }
+}
+
+async function displayIncorrectQuestions() {
+    const container = document.getElementById('incorrect-quiz-container');
+
+    if (!currentUser) {
+        container.innerHTML = `
+            <p style="margin-bottom: 20px;">Sign in to track your incorrect quiz answers!</p>
+            <button class="practice-btn" onclick="showAuthModal()">Sign In / Sign Up</button>
+        `;
+        return;
+    }
+
+    await loadIncorrectQuestions();
+
+    let filtered = userIncorrectQuestions;
+    if (currentIncorrectFilter !== 'all') {
+        filtered = userIncorrectQuestions.filter(q => q.quizType === currentIncorrectFilter);
+    }
+
+    if (filtered.length === 0) {
+        container.innerHTML = '<p>No incorrect answers yet. Keep practicing!</p>';
+        return;
+    }
+
+    container.innerHTML = `
+        <button class="practice-btn" onclick="practiceIncorrectQuestions()">🎯 Practice All Incorrect Answers</button>
+        <div class="word-list" style="margin-top: 20px;">
+            ${filtered.map(q => `
+                <div class="word-card">
+                    <div class="word-title">
+                        <span>${q.word}</span>
+                        <span style="font-size: 0.9rem; color: #666;">${q.quizType === 'practice' ? '📝 Practice' : '🏆 Live'}</span>
+                    </div>
+                    <div class="word-definition"><strong>Q:</strong> ${q.question}</div>
+                    <div class="word-definition"><strong>✅ Answer:</strong> ${q.correctDefinition}</div>
+                    <button class="remove-favorite" onclick="removeIncorrectQuestion('${q.id}')">Remove</button>
+                </div>
+            `).join('')}
+        </div>
+    `;
+}
+
+function filterIncorrectQuiz(type) {
+    currentIncorrectFilter = type;
+    displayIncorrectQuestions();
+}
+
+async function removeIncorrectQuestion(questionId) {
+    if (!currentUser) return;
+
+    try {
+        await db.collection('users').doc(currentUser.uid).collection('incorrectQuestions').doc(questionId).delete();
+        displayIncorrectQuestions();
+    } catch (error) {
+        console.error('Error removing incorrect question:', error);
+    }
+}
+
+async function practiceIncorrectQuestions() {
+    if (userIncorrectQuestions.length === 0) {
+        alert('No incorrect questions to practice!');
+        return;
+    }
+
+    navigateTo('quiz');
+    
+    // Create quiz from incorrect questions
+    currentQuiz = {
+        questions: userIncorrectQuestions.slice(0, 5)
+    };
+    currentQuestionIndex = 0;
+    quizScore = 0;
+    
+    showQuestion();
+}
     </script>
 </body>
 </html>
