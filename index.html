@@ -533,6 +533,132 @@
                 max-width: 100%;
             }
         }
+
+
+
+
+    /* ===== QUIZ STYLES ===== */
+.quiz-tabs {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 30px;
+    border-bottom: 3px solid #0d3b66;
+    flex-wrap: wrap;
+}
+
+.quiz-tab {
+    padding: 15px 30px;
+    background: #f5f5f5;
+    border: none;
+    border-radius: 10px 10px 0 0;
+    font-size: 1.1rem;
+    font-weight: bold;
+    cursor: pointer;
+    font-family: Georgia, serif;
+    color: #0d3b66;
+    transition: all 0.3s;
+}
+
+.quiz-tab:hover {
+    background: #e3f2fd;
+}
+
+.quiz-tab.active {
+    background: #0d3b66;
+    color: white;
+}
+
+.quiz-mode {
+    display: none;
+}
+
+.quiz-mode.active {
+    display: block;
+}
+
+.quiz-question-card {
+    background: white;
+    padding: 30px;
+    border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    margin: 20px 0;
+}
+
+.quiz-options {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    margin: 20px 0;
+}
+
+.quiz-option {
+    padding: 15px 20px;
+    background: #f9f9f9;
+    border: 2px solid #0d3b66;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 1.1rem;
+    transition: all 0.3s;
+    text-align: left;
+}
+
+.quiz-option:hover {
+    background: #e3f2fd;
+    transform: translateX(10px);
+}
+
+.quiz-option.correct {
+    background: #d4edda;
+    border-color: #28a745;
+}
+
+.quiz-option.wrong {
+    background: #f8d7da;
+    border-color: #dc3545;
+}
+
+.quiz-score {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #0d3b66;
+    margin: 20px 0;
+    text-align: center;
+}
+
+.leaderboard-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+}
+
+.leaderboard-table th,
+.leaderboard-table td {
+    padding: 15px;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+}
+
+.leaderboard-table th {
+    background: #0d3b66;
+    color: white;
+    font-weight: bold;
+}
+
+.leaderboard-table tr:hover {
+    background: #f5f5f5;
+}
+
+.rank-badge {
+    display: inline-block;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: #ffd700;
+    color: #0d3b66;
+    font-weight: bold;
+    line-height: 40px;
+    text-align: center;
+}
     </style>
 </head>
 <body>
@@ -565,7 +691,7 @@
             </div>
         </div>
         <nav class="nav-bar">
-            <div class="nav-item">QUIZ</div>
+            <div class="nav-item" onclick="navigateTo('quiz')">QUIZ</div>
             <div class="nav-item">TOURNAMENTS</div>
             <div class="nav-item">SPELLING</div>
         </nav>
@@ -663,6 +789,47 @@
         </div>
     </div>
 
+
+    <!-- Quiz Section -->
+<div id="quiz-section" class="content-section">
+    <div class="word-database">
+        <!-- Quiz Mode Tabs -->
+        <div class="quiz-tabs">
+            <button class="quiz-tab active" onclick="switchQuizMode('practice')">Practice Quiz</button>
+            <button class="quiz-tab" onclick="switchQuizMode('live')">Live Quiz</button>
+            <button class="quiz-tab" onclick="switchQuizMode('leaderboard')">Quiz Leaderboard</button>
+        </div>
+
+        <!-- Practice Quiz Mode -->
+        <div id="practice-quiz-mode" class="quiz-mode active">
+            <div class="welcome-section">
+                <h2>🎯 Practice Quiz</h2>
+                <p>Test your vocabulary skills with AI-generated questions!</p>
+                <button class="practice-btn" onclick="startPracticeQuiz()">Start Practice Quiz</button>
+            </div>
+            <div id="practice-quiz-container"></div>
+        </div>
+
+        <!-- Live Quiz Mode -->
+        <div id="live-quiz-mode" class="quiz-mode">
+            <div class="welcome-section">
+                <h2>🏆 Live Quiz Tournament</h2>
+                <p>Compete against other players in real-time!</p>
+                <button class="practice-btn" onclick="joinLiveTournament()">Join Tournament</button>
+            </div>
+            <div id="live-quiz-container"></div>
+        </div>
+
+        <!-- Leaderboard Mode -->
+        <div id="leaderboard-quiz-mode" class="quiz-mode">
+            <div class="welcome-section">
+                <h2>🏅 Quiz Leaderboard</h2>
+                <p>Top players from live tournaments</p>
+            </div>
+            <div id="leaderboard-container"></div>
+        </div>
+    </div>
+</div>
     <script>
         // ===== FIREBASE CONFIGURATION =====
         const firebaseConfig = {
@@ -1241,6 +1408,180 @@
 
             return matrix[str2.length][str1.length];
         }
+
+
+
+        // ===== QUIZ FUNCTIONS =====
+let currentQuiz = null;
+let currentQuestionIndex = 0;
+let quizScore = 0;
+
+function switchQuizMode(mode) {
+    // Update tabs
+    document.querySelectorAll('.quiz-tab').forEach(tab => {
+        tab.classList.remove('active');
+    });
+    event.target.classList.add('active');
+
+    // Update modes
+    document.querySelectorAll('.quiz-mode').forEach(m => {
+        m.classList.remove('active');
+    });
+
+    if (mode === 'practice') {
+        document.getElementById('practice-quiz-mode').classList.add('active');
+    } else if (mode === 'live') {
+        document.getElementById('live-quiz-mode').classList.add('active');
+    } else if (mode === 'leaderboard') {
+        document.getElementById('leaderboard-quiz-mode').classList.add('active');
+        loadLeaderboard();
+    }
+}
+
+async function startPracticeQuiz() {
+    document.getElementById('practice-quiz-container').innerHTML = '<div class="loading">🎲 Generating quiz questions...</div>';
+    
+    // Get 5 random words from your database
+    const quizWords = [];
+    for (let i = 0; i < 5; i++) {
+        const randomWord = allWords[Math.floor(Math.random() * allWords.length)];
+        quizWords.push(randomWord);
+    }
+
+    try {
+        // Call Cloud Function to generate quiz
+        const response = await fetch(CLOUD_FUNCTION_URL.replace('getWordDefinition', 'generatePracticeQuiz'), {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ data: { words: quizWords } })
+        });
+
+        const data = await response.json();
+        currentQuiz = data.result;
+        currentQuestionIndex = 0;
+        quizScore = 0;
+        
+        showQuestion();
+    } catch (error) {
+        console.error('Error generating quiz:', error);
+        document.getElementById('practice-quiz-container').innerHTML = 
+            '<div class="feedback error">Failed to generate quiz. Please try again.</div>';
+    }
+}
+
+function showQuestion() {
+    const question = currentQuiz.questions[currentQuestionIndex];
+    const container = document.getElementById('practice-quiz-container');
+    
+    container.innerHTML = `
+        <div class="quiz-question-card">
+            <div class="quiz-score">Score: ${quizScore} / ${currentQuestionIndex}</div>
+            <h3>Question ${currentQuestionIndex + 1} of ${currentQuiz.questions.length}</h3>
+            <p style="font-size: 1.3rem; margin: 20px 0;"><strong>${question.question}</strong></p>
+            <div class="quiz-options">
+                ${question.options.map((option, index) => `
+                    <div class="quiz-option" onclick="checkAnswer(${index})">
+                        ${option}
+                    </div>
+                `).join('')}
+            </div>
+        </div>
+    `;
+}
+
+function checkAnswer(selectedIndex) {
+    const question = currentQuiz.questions[currentQuestionIndex];
+    const options = document.querySelectorAll('.quiz-option');
+    
+    // Disable all options
+    options.forEach(opt => opt.style.pointerEvents = 'none');
+    
+    if (selectedIndex === question.correctAnswer) {
+        options[selectedIndex].classList.add('correct');
+        quizScore++;
+    } else {
+        options[selectedIndex].classList.add('wrong');
+        options[question.correctAnswer].classList.add('correct');
+    }
+    
+    // Move to next question after 2 seconds
+    setTimeout(() => {
+        currentQuestionIndex++;
+        if (currentQuestionIndex < currentQuiz.questions.length) {
+            showQuestion();
+        } else {
+            showQuizResults();
+        }
+    }, 2000);
+}
+
+function showQuizResults() {
+    const container = document.getElementById('practice-quiz-container');
+    const percentage = Math.round((quizScore / currentQuiz.questions.length) * 100);
+    
+    container.innerHTML = `
+        <div class="quiz-question-card" style="text-align: center;">
+            <h2>🎉 Quiz Complete!</h2>
+            <div class="quiz-score" style="font-size: 3rem; margin: 30px 0;">
+                ${quizScore} / ${currentQuiz.questions.length}
+            </div>
+            <p style="font-size: 1.5rem; color: #0d3b66; margin: 20px 0;">
+                ${percentage >= 80 ? '🏆 Excellent!' : percentage >= 60 ? '👍 Good job!' : '📚 Keep practicing!'}
+            </p>
+            <button class="practice-btn" onclick="startPracticeQuiz()">Try Again</button>
+        </div>
+    `;
+}
+
+function joinLiveTournament() {
+    document.getElementById('live-quiz-container').innerHTML = 
+        '<div class="loading">🔍 Looking for available tournaments...</div>';
+    
+    // TODO: Implement live tournament matchmaking
+    setTimeout(() => {
+        document.getElementById('live-quiz-container').innerHTML = 
+            '<div class="feedback">Live tournaments coming soon! Check back later.</div>';
+    }, 1500);
+}
+
+function loadLeaderboard() {
+    document.getElementById('leaderboard-container').innerHTML = 
+        '<div class="loading">📊 Loading leaderboard...</div>';
+    
+    db.collection('leaderboard')
+        .orderBy('score', 'desc')
+        .limit(10)
+        .get()
+        .then(snapshot => {
+            if (snapshot.empty) {
+                document.getElementById('leaderboard-container').innerHTML = 
+                    '<div class="feedback">No leaderboard entries yet. Be the first to win a live tournament!</div>';
+                return;
+            }
+
+            let html = '<table class="leaderboard-table"><thead><tr><th>Rank</th><th>Player</th><th>Score</th><th>Date</th></tr></thead><tbody>';
+            
+            snapshot.forEach((doc, index) => {
+                const data = doc.data();
+                html += `
+                    <tr>
+                        <td><span class="rank-badge">${index + 1}</span></td>
+                        <td>${data.playerName || 'Anonymous'}</td>
+                        <td>${data.score}</td>
+                        <td>${data.date ? new Date(data.date.seconds * 1000).toLocaleDateString() : 'N/A'}</td>
+                    </tr>
+                `;
+            });
+            
+            html += '</tbody></table>';
+            document.getElementById('leaderboard-container').innerHTML = html;
+        })
+        .catch(error => {
+            console.error('Error loading leaderboard:', error);
+            document.getElementById('leaderboard-container').innerHTML = 
+                '<div class="feedback error">Failed to load leaderboard.</div>';
+        });
+}
     </script>
 </body>
 </html>
