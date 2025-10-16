@@ -1860,8 +1860,7 @@ async function displayFavorites() {
         return;
     }
 
-    await loadUserFavorites(currentUser.uid);
-
+  
     if (userFavorites.length === 0) {
         container.innerHTML = '<p>No favorites yet. Add words during quiz by clicking the ⭐ button!</p>';
         return;
