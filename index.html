@@ -1897,6 +1897,11 @@ auth.onAuthStateChanged(async user => {
                 if (favIndex !== -1) {
                     userFavorites[favIndex].userAnswerIndex = selectedIndex;
                 }
+                
+                // ADD THIS LINE - Refresh the favorites display if user is on that page
+                if (document.getElementById('favorites-section').classList.contains('active')) {
+                    displayFavorites();
+                }
             }
         }
     }
@@ -1910,6 +1915,7 @@ auth.onAuthStateChanged(async user => {
         }
     }, 3000);
 }
+        
         function showQuizResults() {
             const container = document.getElementById('practice-quiz-container');
             const percentage = Math.round((quizScore / currentQuiz.questions.length) * 100);
@@ -1995,9 +2001,6 @@ auth.onAuthStateChanged(async user => {
         // Get the current question from the quiz
         const question = currentQuiz.questions[currentQuestionIndex];
         
-        // Check if this word is in the incorrect answers to get the user's wrong answer
-        const incorrectAnswer = userIncorrect.find(inc => inc.word === word);
-        
         const favoriteData = {
             word: word,
             question: question.question,
@@ -2007,9 +2010,21 @@ auth.onAuthStateChanged(async user => {
             addedAt: firebase.firestore.FieldValue.serverTimestamp()
         };
         
-        // If this was an incorrect answer, save which option they chose
+        // Check if this question was already answered incorrectly
+        const incorrectAnswer = userIncorrect.find(inc => inc.word === word);
         if (incorrectAnswer && incorrectAnswer.userAnswerIndex !== undefined) {
             favoriteData.userAnswerIndex = incorrectAnswer.userAnswerIndex;
+        }
+        
+        // ALSO check if the user just answered this question wrong (check the DOM)
+        const wrongOption = document.querySelector('.quiz-option.wrong');
+        if (wrongOption) {
+            // Find which index this is
+            const allOptions = Array.from(document.querySelectorAll('.quiz-option'));
+            const wrongIndex = allOptions.indexOf(wrongOption);
+            if (wrongIndex !== -1) {
+                favoriteData.userAnswerIndex = wrongIndex;
+            }
         }
         
         await favoriteRef.set(favoriteData);
@@ -2025,8 +2040,8 @@ auth.onAuthStateChanged(async user => {
             correctDefinition: question.options[question.correctAnswer]
         };
         
-        if (incorrectAnswer && incorrectAnswer.userAnswerIndex !== undefined) {
-            newFavorite.userAnswerIndex = incorrectAnswer.userAnswerIndex;
+        if (favoriteData.userAnswerIndex !== undefined) {
+            newFavorite.userAnswerIndex = favoriteData.userAnswerIndex;
         }
         
         userFavorites.push(newFavorite);
