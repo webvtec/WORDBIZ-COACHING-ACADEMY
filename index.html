@@ -1835,32 +1835,32 @@ auth.onAuthStateChanged(async user => {
         }
 
         function showQuestion(quizType = 'practice') {
-            const question = currentQuiz.questions[currentQuestionIndex];
-            const container = document.getElementById('practice-quiz-container');
-            
-            const isFavorited = userFavorites.some(fav => fav.word === question.word);
-            
-            container.innerHTML = `
-                <div class="quiz-question-card" style="position: relative;">
-                    ${currentUser ? `
-                        <span class="favorite-heart ${isFavorited ? 'active' : ''}" 
-                              onclick="toggleFavorite('${question.word}', null, this)">
-                            ${isFavorited ? '❤️' : '�'}
-                        </span>
-                    ` : ''}
-                    <div class="quiz-score">Score: ${quizScore} / ${currentQuestionIndex}</div>
-                    <h3>Question ${currentQuestionIndex + 1} of ${currentQuiz.questions.length}</h3>
-                    <p style="font-size: 1.3rem; margin: 20px 0;"><strong>${question.question}</strong></p>
-                    <div class="quiz-options">
-                        ${question.options.map((option, index) => `
-                            <div class="quiz-option" onclick="checkAnswer(${index}, '${quizType}')">
-                                ${option}
-                            </div>
-                        `).join('')}
+    const question = currentQuiz.questions[currentQuestionIndex];
+    const container = document.getElementById('practice-quiz-container');
+    
+    const isFavorited = userFavorites.some(fav => fav.word === question.word);
+    
+    container.innerHTML = `
+        <div class="quiz-question-card" style="position: relative;">
+            ${currentUser ? `
+                <span class="favorite-heart ${isFavorited ? 'active' : ''}" 
+                      onclick="event.stopPropagation(); toggleFavorite('${question.word}', null, this)">
+                    ${isFavorited ? '❤️' : '🤍'}
+                </span>
+            ` : ''}
+            <div class="quiz-score">Score: ${quizScore} / ${currentQuestionIndex}</div>
+            <h3>Question ${currentQuestionIndex + 1} of ${currentQuiz.questions.length}</h3>
+            <p style="font-size: 1.3rem; margin: 20px 0;"><strong>${question.question}</strong></p>
+            <div class="quiz-options">
+                ${question.options.map((option, index) => `
+                    <div class="quiz-option" onclick="checkAnswer(${index}, '${quizType}')">
+                        ${option}
                     </div>
-                </div>
-            `;
-        }
+                `).join('')}
+            </div>
+        </div>
+    `;
+}
 
         async function checkAnswer(selectedIndex, quizType = 'practice') {
             const question = currentQuiz.questions[currentQuestionIndex];
@@ -1974,11 +1974,8 @@ auth.onAuthStateChanged(async user => {
         element.classList.remove('active');
         userFavorites = userFavorites.filter(fav => fav.word !== word);
     } else {
-        // Save the entire question with all options
+        // Get the current question from the quiz
         const question = currentQuiz.questions[currentQuestionIndex];
-        
-        // Find if this was a question they got wrong (check if it exists in incorrect answers)
-        const incorrectAnswer = userIncorrect.find(inc => inc.word === word);
         
         await favoriteRef.set({
             word: word,
@@ -1986,7 +1983,6 @@ auth.onAuthStateChanged(async user => {
             options: question.options,
             correctAnswer: question.correctAnswer,
             correctDefinition: question.options[question.correctAnswer],
-            userAnswerIndex: incorrectAnswer ? incorrectAnswer.userAnswerIndex : undefined,
             addedAt: firebase.firestore.FieldValue.serverTimestamp()
         });
         
@@ -1997,8 +1993,7 @@ auth.onAuthStateChanged(async user => {
             question: question.question,
             options: question.options,
             correctAnswer: question.correctAnswer,
-            correctDefinition: question.options[question.correctAnswer],
-            userAnswerIndex: incorrectAnswer ? incorrectAnswer.userAnswerIndex : undefined
+            correctDefinition: question.options[question.correctAnswer]
         });
     }
 
