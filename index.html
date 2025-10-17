@@ -903,7 +903,7 @@
 <nav class="nav-bar">
             <div class="nav-item" onclick="navigateTo('quiz', true)">QUIZ</div>
             <div class="nav-item">TOURNAMENTS</div>
-            <div class="nav-item">SPELLING</div>
+           <div class="nav-item" onclick="navigateTo('spelling', true)">SPELLING</div>
         </nav>
     </header>
 
@@ -1065,6 +1065,69 @@
         </div>
     </div>
 
+
+
+    <!-- Spelling Section -->
+        <div id="spelling-section" class="content-section">
+            <div class="word-database">
+                <div class="database-header">
+                    <h2>🔤 SPELLING PRACTICE</h2>
+                </div>
+                
+                <div id="spelling-container">
+                    <div class="welcome-section">
+                        <h2>Practice Your Spelling Skills</h2>
+                        <p>Listen to the word and type what you hear. The AI will speak each word clearly.</p>
+                        
+                        <div style="margin: 20px 0;">
+                            <label style="display: block; margin-bottom: 10px; font-weight: bold;">Difficulty Level:</label>
+                            <select id="spelling-difficulty" style="padding: 10px; font-size: 1rem; border: 2px solid #0d3b66; border-radius: 5px; width: 200px;">
+                                <option value="easy">Easy (3-5 letters)</option>
+                                <option value="medium" selected>Medium (6-8 letters)</option>
+                                <option value="hard">Hard (9+ letters)</option>
+                            </select>
+                        </div>
+                        
+                        <button class="practice-btn" onclick="startSpellingPractice()">Start Spelling Practice</button>
+                    </div>
+                    
+                    <div id="spelling-game" style="display: none;">
+                        <div class="quiz-question-card">
+                            <div class="quiz-score" id="spelling-score">Score: 0 / 0</div>
+                            <h3 id="spelling-progress">Word 1 of 10</h3>
+                            
+                            <div style="text-align: center; margin: 30px 0;">
+                                <button class="practice-btn" onclick="speakCurrentSpellingWord()" style="font-size: 1.3rem; padding: 20px 40px;">
+                                    🔊 Play Word
+                                </button>
+                                <p style="margin-top: 10px; color: #666; font-style: italic;">Click to hear the word again</p>
+                            </div>
+                            
+                            <div class="form-group" style="margin: 30px 0;">
+                                <label style="font-size: 1.2rem;">Type what you hear:</label>
+                                <input type="text" id="spelling-input" 
+                                       placeholder="Type the word here..." 
+                                       style="width: 100%; padding: 15px; font-size: 1.3rem; text-align: center; border: 3px solid #0d3b66; border-radius: 8px; margin-top: 10px;"
+                                       onkeypress="if(event.key==='Enter') submitSpelling()">
+                            </div>
+                            
+                            <div style="text-align: center;">
+                                <button class="practice-btn" onclick="submitSpelling()" style="font-size: 1.2rem; padding: 15px 50px;">
+                                    ✓ Submit Answer
+                                </button>
+                                <button class="practice-btn" onclick="skipSpellingWord()" style="background: #666; margin-left: 10px;">
+                                    ⏭️ Skip
+                                </button>
+                            </div>
+                            
+                            <div id="spelling-feedback" style="margin-top: 20px;"></div>
+                        </div>
+                    </div>
+                    
+                    <div id="spelling-results" style="display: none;"></div>
+                </div>
+            </div>
+        </div>
     <script>
         // ===== FIREBASE CONFIGURATION =====
         const firebaseConfig = {
@@ -1096,6 +1159,15 @@
         let userFavorites = [];
         let userIncorrect = [];
 
+
+         // ===== SPELLING PRACTICE FUNCTIONS =====
+        let spellingWords = [];
+        let currentSpellingIndex = 0;
+        let spellingScore = 0;
+        let currentSpellingWord = '';
+        let spellingMistakes = [];
+
+        
         // ===== INITIALIZE =====
         document.addEventListener('DOMContentLoaded', function() {
             initializeAlphabet();
@@ -2348,6 +2420,210 @@ function displayFavorites() {
         console.error('Error cleaning up favorites:', error);
     }
 }
+
+
+       
+
+        function startSpellingPractice() {
+            const difficulty = document.getElementById('spelling-difficulty').value;
+            
+            // Filter words by difficulty
+            let filteredWords = [];
+            if (difficulty === 'easy') {
+                filteredWords = allWords.filter(word => word.length >= 3 && word.length <= 5);
+            } else if (difficulty === 'medium') {
+                filteredWords = allWords.filter(word => word.length >= 6 && word.length <= 8);
+            } else {
+                filteredWords = allWords.filter(word => word.length >= 9);
+            }
+            
+            if (filteredWords.length < 10) {
+                alert('Not enough words in this difficulty level. Try another difficulty.');
+                return;
+            }
+            
+            // Select 10 random words
+            spellingWords = [];
+            const shuffled = [...filteredWords].sort(() => 0.5 - Math.random());
+            spellingWords = shuffled.slice(0, 10);
+            
+            currentSpellingIndex = 0;
+            spellingScore = 0;
+            spellingMistakes = [];
+            
+            document.querySelector('#spelling-container .welcome-section').style.display = 'none';
+            document.getElementById('spelling-game').style.display = 'block';
+            document.getElementById('spelling-results').style.display = 'none';
+            
+            loadSpellingWord();
+        }
+
+        function loadSpellingWord() {
+            currentSpellingWord = spellingWords[currentSpellingIndex];
+            
+            document.getElementById('spelling-progress').textContent = 
+                `Word ${currentSpellingIndex + 1} of ${spellingWords.length}`;
+            document.getElementById('spelling-score').textContent = 
+                `Score: ${spellingScore} / ${currentSpellingIndex}`;
+            document.getElementById('spelling-input').value = '';
+            document.getElementById('spelling-feedback').innerHTML = '';
+            
+            // Auto-play the word when loaded
+            setTimeout(() => speakCurrentSpellingWord(), 500);
+            
+            // Focus on input
+            document.getElementById('spelling-input').focus();
+        }
+
+        function speakCurrentSpellingWord() {
+            if (!currentSpellingWord) return;
+            
+            const utterance = new SpeechSynthesisUtterance(currentSpellingWord);
+            utterance.rate = 0.7; // Slower for spelling
+            utterance.pitch = 1;
+            utterance.volume = 1;
+            
+            window.speechSynthesis.cancel();
+            window.speechSynthesis.speak(utterance);
+            
+            // Visual feedback
+            const btn = event?.target;
+            if (btn) {
+                btn.style.transform = 'scale(0.95)';
+                setTimeout(() => btn.style.transform = 'scale(1)', 200);
+            }
+        }
+
+        function submitSpelling() {
+            const userAnswer = document.getElementById('spelling-input').value.trim().toLowerCase();
+            const correctWord = currentSpellingWord.toLowerCase();
+            const feedbackDiv = document.getElementById('spelling-feedback');
+            
+            if (!userAnswer) {
+                feedbackDiv.innerHTML = '<div class="feedback error">⚠️ Please type a word before submitting</div>';
+                return;
+            }
+            
+            if (userAnswer === correctWord) {
+                spellingScore++;
+                feedbackDiv.innerHTML = `
+                    <div class="feedback success">
+                        ✅ Correct! The word is: <strong>${currentSpellingWord}</strong>
+                    </div>
+                `;
+            } else {
+                spellingMistakes.push({
+                    word: currentSpellingWord,
+                    userAnswer: userAnswer
+                });
+                
+                feedbackDiv.innerHTML = `
+                    <div class="feedback error">
+                        ❌ Incorrect. You wrote: <strong>${userAnswer}</strong><br>
+                        Correct spelling: <strong>${currentSpellingWord}</strong>
+                    </div>
+                `;
+                
+                // Speak the correct word again
+                setTimeout(() => speakCurrentSpellingWord(), 1000);
+            }
+            
+            // Move to next word after delay
+            setTimeout(() => {
+                currentSpellingIndex++;
+                if (currentSpellingIndex < spellingWords.length) {
+                    loadSpellingWord();
+                } else {
+                    showSpellingResults();
+                }
+            }, 3000);
+        }
+
+        function skipSpellingWord() {
+            spellingMistakes.push({
+                word: currentSpellingWord,
+                userAnswer: '(skipped)'
+            });
+            
+            const feedbackDiv = document.getElementById('spelling-feedback');
+            feedbackDiv.innerHTML = `
+                <div class="feedback" style="background: #fff3cd; border-color: #ffc107; color: #856404;">
+                    ⏭️ Skipped. The word was: <strong>${currentSpellingWord}</strong>
+                </div>
+            `;
+            
+            speakCurrentSpellingWord();
+            
+            setTimeout(() => {
+                currentSpellingIndex++;
+                if (currentSpellingIndex < spellingWords.length) {
+                    loadSpellingWord();
+                } else {
+                    showSpellingResults();
+                }
+            }, 2000);
+        }
+
+        function showSpellingResults() {
+            document.getElementById('spelling-game').style.display = 'none';
+            const resultsDiv = document.getElementById('spelling-results');
+            resultsDiv.style.display = 'block';
+            
+            const percentage = Math.round((spellingScore / spellingWords.length) * 100);
+            
+            let message = '';
+            let emoji = '';
+            
+            if (percentage >= 90) {
+                message = 'Outstanding! You\'re a spelling champion!';
+                emoji = '🏆';
+            } else if (percentage >= 70) {
+                message = 'Great job! Keep practicing!';
+                emoji = '⭐';
+            } else if (percentage >= 50) {
+                message = 'Good effort! Practice makes perfect!';
+                emoji = '👍';
+            } else {
+                message = 'Keep practicing! You\'ll improve!';
+                emoji = '📚';
+            }
+            
+            resultsDiv.innerHTML = `
+                <div class="quiz-question-card" style="text-align: center;">
+                    <div style="font-size: 4rem; margin: 20px 0;">${emoji}</div>
+                    <h2>Spelling Practice Complete!</h2>
+                    <div class="quiz-score">Final Score: ${spellingScore} / ${spellingWords.length}</div>
+                    <p style="font-size: 1.5rem; margin: 20px 0; color: #0d3b66;">${percentage}%</p>
+                    <p style="font-size: 1.2rem; margin: 20px 0;">${message}</p>
+                    
+                    ${spellingMistakes.length > 0 ? `
+                        <div style="margin: 30px 0; text-align: left; max-width: 600px; margin-left: auto; margin-right: auto;">
+                            <h3 style="color: #0d3b66; margin-bottom: 15px;">📝 Words to Review:</h3>
+                            <div style="background: #f9f9f9; padding: 20px; border-radius: 8px;">
+                                ${spellingMistakes.map(mistake => `
+                                    <div style="padding: 10px; margin: 5px 0; background: white; border-left: 3px solid #dc3545; border-radius: 5px;">
+                                        <strong>${mistake.word}</strong> 
+                                        <span style="color: #666;">- You wrote: ${mistake.userAnswer}</span>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    ` : ''}
+                    
+                    <div style="display: flex; gap: 10px; justify-content: center; margin-top: 30px; flex-wrap: wrap;">
+                        <button class="practice-btn" onclick="startSpellingPractice()">🔄 Practice Again</button>
+                        <button class="practice-btn" onclick="restartSpellingSection()">📚 Change Difficulty</button>
+                        <button class="practice-btn" onclick="navigateTo('home')">🏠 Home</button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function restartSpellingSection() {
+            document.getElementById('spelling-game').style.display = 'none';
+            document.getElementById('spelling-results').style.display = 'none';
+            document.querySelector('#spelling-container .welcome-section').style.display = 'block';
+        }
     </script>
 </body>
 </html>
