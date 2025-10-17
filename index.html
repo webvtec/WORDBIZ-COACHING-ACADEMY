@@ -945,21 +945,22 @@
         <!-- Quiz Section -->
         <div id="quiz-section" class="content-section">
             <div class="word-database">
-        <div class="quiz-tabs">
-            <button class="quiz-tab active" onclick="switchQuizMode('practice')">Practice Quiz</button>
-            <button class="quiz-tab" onclick="switchQuizMode('live')">Live Quiz</button>
-            <button class="quiz-tab" onclick="switchQuizMode('leaderboard')">Quiz Leaderboard</button>
-        </div>
+                <div class="quiz-tabs">
+                    <button class="quiz-tab active" onclick="switchQuizMode('practice')">Practice Quiz</button>
+                    <button class="quiz-tab" onclick="switchQuizMode('live')">Live Quiz</button>
+                    <button class="quiz-tab" onclick="switchQuizMode('leaderboard')">Quiz Leaderboard</button>
+                </div>
 
+                <!-- Practice Quiz Mode -->
                 <div id="practice-quiz-mode" class="quiz-mode active">
                     <div class="welcome-section">
                         <h2>🎯 Practice Quiz</h2>
+                        <p>Test your vocabulary knowledge with AI-generated questions.</p>
                         <button class="practice-btn" onclick="startPracticeQuiz()">Start Practice Quiz</button>
                     </div>
                     <div id="practice-quiz-container"></div>
                 </div>
-            </div>
-        </div>
+
 
         <!-- Favorites Section -->
         <div id="favorites-section" class="content-section">
