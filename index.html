@@ -1926,30 +1926,33 @@ auth.onAuthStateChanged(async user => {
         }
 
         // ===== FAVORITES MANAGEMENT =====
-      async function loadUserFavorites(userId) {
+     async function loadUserFavorites(userId) {
     try {
         const snapshot = await db.collection('users').doc(userId).collection('favorites').get();
         
-        // Filter out invalid favorites
+        // Load all favorites - only filter out truly broken ones
         userFavorites = snapshot.docs
             .map(doc => ({ id: doc.id, ...doc.data() }))
             .filter(fav => {
-                // Only keep valid favorites with proper data
+                // Keep if it has word and valid question
                 return fav.word && 
                        fav.question && 
-                       fav.question !== 'undefined' && 
-                       fav.options && 
-                       Array.isArray(fav.options) && 
-                       fav.options.length > 0 &&
-                       typeof fav.correctAnswer === 'number';
+                       fav.question !== 'undefined';
             });
         
+        console.log('Loaded favorites:', userFavorites);
         displayFavorites();
         
-        // Enable quiz button if enough favorites
+        // Enable quiz button based on valid quizzable favorites
         const btn = document.getElementById('favoritesQuizBtn');
         if (btn) {
-            btn.disabled = userFavorites.length < 5;
+            const quizzableFavorites = userFavorites.filter(fav => 
+                fav.options && 
+                Array.isArray(fav.options) && 
+                fav.options.length > 0 &&
+                typeof fav.correctAnswer === 'number'
+            );
+            btn.disabled = quizzableFavorites.length < 5;
         }
     } catch (error) {
         console.error('Error loading favorites:', error);
@@ -1995,52 +1998,42 @@ auth.onAuthStateChanged(async user => {
             displayFavorites();
         }
         
-function displayFavorites() {
-    const container = document.getElementById('favorites-container');
-    const btn = document.getElementById('favoritesQuizBtn');
-
-    if (!currentUser) {
-        container.innerHTML = '<div class="loading">Please sign in to save favorites</div>';
-        if (btn) btn.disabled = true;
+async function startFavoritesQuiz() {
+    // Only use favorites that have full question data
+    const quizzableFavorites = userFavorites.filter(fav => 
+        fav.options && 
+        Array.isArray(fav.options) && 
+        fav.options.length > 0 &&
+        typeof fav.correctAnswer === 'number'
+    );
+    
+    const minQuestions = Math.min(quizzableFavorites.length, 5);
+    if (quizzableFavorites.length < minQuestions) {
+        alert(`You need at least ${minQuestions} quizzable favorites to generate a quiz`);
         return;
     }
 
-    if (userFavorites.length === 0) {
-        container.innerHTML = '<div class="loading">No favorites yet. Add some words from quizzes!</div>';
-        if (btn) btn.disabled = true;
-        return;
-    }
+    navigateTo('quiz', true);
+    document.getElementById('practice-quiz-container').innerHTML = '<div class="loading">🎲 Generating quiz from your favorites...</div>';
 
-    const minQuestions = Math.min(userFavorites.length, 5);
-    if (btn) btn.disabled = userFavorites.length < minQuestions;
+    // Use the exact saved questions with their options
+    const selectedFavorites = [...quizzableFavorites].sort(() => 0.5 - Math.random()).slice(0, minQuestions);
 
-    container.innerHTML = `
-        ${userFavorites.length < 5 ? `
-            <div class="loading">
-                You have ${userFavorites.length} favorite(s). Add at least ${5 - userFavorites.length} more to generate a quiz.
-            </div>
-        ` : ''}
-        <div class="favorites-grid">
-            ${userFavorites.map(fav => `
-                <div class="favorite-card">
-                    <button class="delete-btn" onclick="removeFavorite('${fav.word}')">×</button>
-                    <h3 style="color: #0d3b66; margin-bottom: 10px;">${fav.word}</h3>
-                    <p style="color: #666; margin-bottom: 10px;"><strong>Q:</strong> ${fav.question}</p>
-                    <div style="margin: 10px 0;">
-                        ${fav.options.map((opt, idx) => `
-                            <p style="padding: 8px; margin: 5px 0; border-radius: 5px; font-size: 0.9rem; 
-                               border: 2px solid ${idx === fav.correctAnswer ? '#28a745' : '#ddd'};
-                               background: ${idx === fav.correctAnswer ? '#d4edda' : '#f9f9f9'};">
-                                ${opt} ${idx === fav.correctAnswer ? '✓' : ''}
-                            </p>
-                        `).join('')}
-                    </div>
-                </div>
-            `).join('')}
-        </div>
-    `;
+    const quizQuestions = selectedFavorites.map(fav => ({
+        word: fav.word,
+        question: fav.question,
+        options: fav.options,
+        correctAnswer: fav.correctAnswer,
+        correctDefinition: fav.correctDefinition
+    }));
+
+    currentQuiz = { questions: quizQuestions };
+    currentQuestionIndex = 0;
+    quizScore = 0;
+
+    showQuestion('favorites');
 }
-
+        
         async function removeFavorite(word) {
             if (!currentUser) return;
 
@@ -2049,33 +2042,41 @@ function displayFavorites() {
             displayFavorites();
         }
 
-       async function startFavoritesQuiz() {
-            const minQuestions = Math.min(userFavorites.length, 5);
-            if (userFavorites.length < minQuestions) {
-                alert(`You need at least ${minQuestions} favorites to generate a quiz`);
-                return;
-            }
+      async function startFavoritesQuiz() {
+    // Only use favorites that have full question data
+    const quizzableFavorites = userFavorites.filter(fav => 
+        fav.options && 
+        Array.isArray(fav.options) && 
+        fav.options.length > 0 &&
+        typeof fav.correctAnswer === 'number'
+    );
+    
+    const minQuestions = Math.min(quizzableFavorites.length, 5);
+    if (quizzableFavorites.length < minQuestions) {
+        alert(`You need at least ${minQuestions} quizzable favorites to generate a quiz`);
+        return;
+    }
 
-            navigateTo('quiz', true);
-            document.getElementById('practice-quiz-container').innerHTML = '<div class="loading">🎲 Generating quiz from your favorites...</div>';
+    navigateTo('quiz', true);
+    document.getElementById('practice-quiz-container').innerHTML = '<div class="loading">🎲 Generating quiz from your favorites...</div>';
 
-            // Use the exact saved questions with their options
-            const selectedFavorites = [...userFavorites].sort(() => 0.5 - Math.random()).slice(0, minQuestions);
+    // Use the exact saved questions with their options
+    const selectedFavorites = [...quizzableFavorites].sort(() => 0.5 - Math.random()).slice(0, minQuestions);
 
-            const quizQuestions = selectedFavorites.map(fav => ({
-                word: fav.word,
-                question: fav.question,
-                options: fav.options,
-                correctAnswer: fav.correctAnswer,
-                correctDefinition: fav.correctDefinition
-            }));
+    const quizQuestions = selectedFavorites.map(fav => ({
+        word: fav.word,
+        question: fav.question,
+        options: fav.options,
+        correctAnswer: fav.correctAnswer,
+        correctDefinition: fav.correctDefinition
+    }));
 
-            currentQuiz = { questions: quizQuestions };
-            currentQuestionIndex = 0;
-            quizScore = 0;
+    currentQuiz = { questions: quizQuestions };
+    currentQuestionIndex = 0;
+    quizScore = 0;
 
-            showQuestion('favorites');
-        }
+    showQuestion('favorites');
+}
 
         
       async function loadUserIncorrect(userId) {
@@ -2221,14 +2222,8 @@ function displayFavorites() {
         const deletions = [];
         snapshot.docs.forEach(doc => {
             const data = doc.data();
-            // Delete if data is invalid
-            if (!data.word || 
-                !data.question || 
-                data.question === 'undefined' || 
-                !data.options || 
-                !Array.isArray(data.options) || 
-                data.options.length === 0 ||
-                typeof data.correctAnswer !== 'number') {
+            // Only delete if question is literally "undefined" or missing word
+            if (!data.word || data.question === 'undefined') {
                 console.log('Deleting invalid favorite:', doc.id);
                 deletions.push(doc.ref.delete());
             }
