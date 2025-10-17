@@ -1100,7 +1100,10 @@
                                 <button class="practice-btn" onclick="speakCurrentSpellingWord()" style="font-size: 1.3rem; padding: 20px 40px;">
                                     🔊 Play Word
                                 </button>
-                                <p style="margin-top: 10px; color: #666; font-style: italic;">Click to hear the word again</p>
+                                <button class="practice-btn" onclick="speakWordInSentence()" style="font-size: 1.1rem; padding: 15px 30px; background: #28a745; margin-left: 10px;">
+                                    💬 Use in Sentence
+                                </button>
+                                <p style="margin-top: 10px; color: #666; font-style: italic;">Listen to the word alone or in a sentence</p>
                             </div>
                             
                             <div class="form-group" style="margin: 30px 0;">
@@ -2475,7 +2478,7 @@ function displayFavorites() {
             document.getElementById('spelling-input').focus();
         }
 
-        function speakCurrentSpellingWord() {
+       function speakCurrentSpellingWord() {
             if (!currentSpellingWord) return;
             
             const utterance = new SpeechSynthesisUtterance(currentSpellingWord);
@@ -2491,6 +2494,85 @@ function displayFavorites() {
             if (btn) {
                 btn.style.transform = 'scale(0.95)';
                 setTimeout(() => btn.style.transform = 'scale(1)', 200);
+            }
+        }
+
+        async function speakWordInSentence() {
+            if (!currentSpellingWord) return;
+            
+            // Show loading state
+            const btn = event?.target;
+            if (btn) {
+                btn.disabled = true;
+                btn.textContent = '⏳ Loading...';
+            }
+            
+            try {
+                // Fetch word definition to get example sentence
+                const wordRef = db.collection('dictionary').doc(currentSpellingWord.toLowerCase());
+                const wordDoc = await wordRef.get();
+                
+                let exampleSentence = null;
+                
+                if (wordDoc.exists) {
+                    const data = wordDoc.data();
+                    if (data.meanings && data.meanings.length > 0) {
+                        for (let meaning of data.meanings) {
+                            if (meaning.example) {
+                                exampleSentence = meaning.example;
+                                break;
+                            }
+                        }
+                    }
+                }
+                
+                // If no cached example, fetch from API
+                if (!exampleSentence) {
+                    const response = await fetch(CLOUD_FUNCTION_URL, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ data: { word: currentSpellingWord } })
+                    });
+                    
+                    if (response.ok) {
+                        const data = await response.json();
+                        if (data.result && data.result.meanings && data.result.meanings.length > 0) {
+                            for (let meaning of data.result.meanings) {
+                                if (meaning.example) {
+                                    exampleSentence = meaning.example;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+                
+                // If still no example, create a simple sentence
+                if (!exampleSentence) {
+                    exampleSentence = `The word is ${currentSpellingWord}.`;
+                }
+                
+                // Speak the sentence
+                const utterance = new SpeechSynthesisUtterance(exampleSentence);
+                utterance.rate = 0.8;
+                utterance.pitch = 1;
+                utterance.volume = 1;
+                
+                window.speechSynthesis.cancel();
+                window.speechSynthesis.speak(utterance);
+                
+            } catch (error) {
+                console.error('Error getting sentence:', error);
+                // Fallback: just say the word
+                const utterance = new SpeechSynthesisUtterance(`The word is ${currentSpellingWord}.`);
+                utterance.rate = 0.8;
+                window.speechSynthesis.speak(utterance);
+            } finally {
+                // Reset button
+                if (btn) {
+                    btn.disabled = false;
+                    btn.textContent = '💬 Use in Sentence';
+                }
             }
         }
 
