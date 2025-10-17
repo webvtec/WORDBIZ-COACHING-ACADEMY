@@ -2033,6 +2033,63 @@ async function startFavoritesQuiz() {
 
     showQuestion('favorites');
 }
+
+        function displayFavorites() {
+    const container = document.getElementById('favorites-container');
+    const btn = document.getElementById('favoritesQuizBtn');
+
+    if (!currentUser) {
+        container.innerHTML = '<div class="loading">Please sign in to save favorites</div>';
+        if (btn) btn.disabled = true;
+        return;
+    }
+
+    if (userFavorites.length === 0) {
+        container.innerHTML = '<div class="loading">No favorites yet. Star words from quizzes to add them here!</div>';
+        if (btn) btn.disabled = true;
+        return;
+    }
+
+    const quizzableFavorites = userFavorites.filter(fav => 
+        fav.options && 
+        Array.isArray(fav.options) && 
+        fav.options.length > 0 &&
+        typeof fav.correctAnswer === 'number'
+    );
+
+    if (btn) {
+        btn.disabled = quizzableFavorites.length < 5;
+    }
+
+    container.innerHTML = `
+        ${userFavorites.length < 5 ? `
+            <div class="loading">
+                You have ${userFavorites.length} favorite(s). Add at least ${5 - userFavorites.length} more to generate a quiz.
+            </div>
+        ` : ''}
+        <div class="favorites-grid">
+            ${userFavorites.map(fav => `
+                <div class="favorite-card">
+                    <button class="delete-btn" onclick="removeFavorite('${fav.word}')">×</button>
+                    <h3 style="color: #0d3b66; margin-bottom: 10px;">${fav.word}</h3>
+                    <p style="color: #666; margin-bottom: 10px;"><strong>Q:</strong> ${fav.question}</p>
+                    ${fav.options ? `
+                        <div style="margin: 10px 0;">
+                            ${fav.options.map((opt, idx) => `
+                                <p style="padding: 5px; margin: 3px 0; border-radius: 5px; font-size: 0.9rem; 
+                                   background: ${idx === fav.correctAnswer ? '#d4edda' : '#f9f9f9'};">
+                                    ${opt} ${idx === fav.correctAnswer ? '✓' : ''}
+                                </p>
+                            `).join('')}
+                        </div>
+                    ` : `
+                        <p style="color: #28a745; margin-top: 10px;"><strong>Definition:</strong> ${fav.correctDefinition || 'No definition saved'}</p>
+                    `}
+                </div>
+            `).join('')}
+        </div>
+    `;
+}
         
         async function removeFavorite(word) {
             if (!currentUser) return;
