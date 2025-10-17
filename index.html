@@ -1106,10 +1106,13 @@
                                         🔊 Play Word
                                     </button>
                                     <button class="practice-btn" onclick="speakWordInSentence()" style="font-size: 1.1rem; padding: 15px 30px; background: #28a745; margin-left: 10px;">
-                                        💬 Use in Sentence
-                                    </button>
-                                    <p style="margin-top: 10px; color: #666; font-style: italic;">Listen to the word alone or in a sentence</p>
-                                </div>
+                                    💬 Use in Sentence
+                                     </button>
+                                     <button class="practice-btn" onclick="showSpellingWordDetails()" style="font-size: 1.1rem; padding: 15px 30px; background: #17a2b8; margin-left: 10px;">
+                                     📖 Word Details
+                                     </button>
+                                      <p style="margin-top: 10px; color: #666; font-style: italic;">Listen to the word alone, in a sentence, or see its details</p>
+                                     </div>
                                 
                                 <div class="form-group" style="margin: 30px 0;">
                                     <label style="font-size: 1.2rem;">Type what you hear:</label>
@@ -1407,13 +1410,40 @@ auth.onAuthStateChanged(async user => {
         // Step 1: Check if word exists in Firestore cache
         const wordRef = db.collection('dictionary').doc(word.toLowerCase());
         const wordDoc = await wordRef.get();
-
-        if (wordDoc.exists) {
-            // Word found in cache - use it (NO API CALL = FREE!)
-            console.log('✅ Found in cache - no API call needed!');
-            const cachedData = wordDoc.data();
-            displayWordDetails(cachedData);
-        } else {
+       if (wordDoc.exists) {
+    // Word found in cache - use it (NO API CALL = FREE!)
+    console.log('✅ Found in cache - no API call needed!');
+    const cachedData = wordDoc.data();
+    
+    // Check if origin is missing and fetch it
+    if (!cachedData.origin) {
+        console.log('⚠️ Origin missing - fetching from API...');
+        try {
+            const response = await fetch(CLOUD_FUNCTION_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ data: { word: word } })
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                if (data.result && data.result.origin) {
+                    // Update Firestore with origin
+                    await wordRef.update({
+                        origin: data.result.origin
+                    });
+                    cachedData.origin = data.result.origin;
+                    console.log('✅ Origin fetched and saved!');
+                }
+            }
+        } catch (error) {
+            console.error('Error fetching origin:', error);
+        }
+    }
+    
+    displayWordDetails(cachedData);
+}
+       else {
             // Step 2: Word NOT in cache - fetch from API (COSTS MONEY)
             console.log('⚠️ Not in cache - calling paid API...');
             console.log('API URL:', CLOUD_FUNCTION_URL);
@@ -2659,6 +2689,56 @@ function displayFavorites() {
             }
         }
 
+
+        async function showSpellingWordDetails() {
+    if (!currentSpellingWord) return;
+    
+    const feedbackDiv = document.getElementById('spelling-feedback');
+    feedbackDiv.innerHTML = '<div class="loading">📚 Loading word details...</div>';
+    
+    try {
+        const wordDetails = await fetchWordDetails(currentSpellingWord);
+        
+        feedbackDiv.innerHTML = `
+            <div style="background: white; padding: 20px; border-radius: 8px; border: 2px solid #17a2b8; margin-top: 15px;">
+                <h3 style="color: #17a2b8; margin-bottom: 15px;">📖 Word Information</h3>
+                
+                ${wordDetails.phonetic ? `
+                    <div style="margin-bottom: 15px;">
+                        <strong style="color: #0d3b66;">🔊 Pronunciation:</strong>
+                        <span style="font-style: italic; color: #666; margin-left: 8px;">${wordDetails.phonetic}</span>
+                    </div>
+                ` : ''}
+                
+                ${wordDetails.origin ? `
+                    <div style="margin-bottom: 15px; padding: 12px; background: #fff3cd; border-left: 3px solid #ffc107; border-radius: 5px;">
+                        <strong style="color: #856404;">📜 Origin:</strong>
+                        <p style="color: #856404; margin-top: 8px; line-height: 1.6; font-size: 0.95rem;">${wordDetails.origin}</p>
+                    </div>
+                ` : ''}
+                
+                ${wordDetails.definition ? `
+                    <div style="margin-bottom: 10px;">
+                        <strong style="color: #0d3b66;">📝 Definition:</strong>
+                        <p style="color: #333; margin-top: 8px; line-height: 1.6;">${wordDetails.definition}</p>
+                    </div>
+                ` : ''}
+                
+                <p style="margin-top: 15px; padding: 10px; background: #e3f2fd; border-radius: 5px; color: #0d3b66; font-style: italic; text-align: center;">
+                    ⚠️ Remember: Don't use this to cheat! Use it to learn about the word after attempting.
+                </p>
+            </div>
+        `;
+    } catch (error) {
+        console.error('Error fetching word details:', error);
+        feedbackDiv.innerHTML = `
+            <div class="feedback error">
+                ❌ Unable to load word details. Please try again.
+            </div>
+        `;
+    }
+}
+        
         async function submitSpelling() {
     const userAnswer = document.getElementById('spelling-input').value.trim().toLowerCase();
     const correctWord = currentSpellingWord.toLowerCase();
