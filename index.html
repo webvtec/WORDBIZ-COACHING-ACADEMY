@@ -1532,76 +1532,137 @@ auth.onAuthStateChanged(async user => {
     }
 }
 
-        // ===== DISPLAY WORD DETAILS =====
-        function displayWordDetails(wordData) {
-            const phonetic = wordData.phonetic || '';
-            document.getElementById('modalPhonetic').textContent = phonetic;
+function displayWordDetails(wordData) {
+    const phonetic = wordData.phonetic || '';
+    document.getElementById('modalPhonetic').textContent = phonetic;
 
-            let html = '';
+    let html = '';
 
-            if (wordData.meanings && wordData.meanings.length > 0) {
-                wordData.meanings.forEach((meaning, index) => {
-                    html += `
-                        <div style="margin-bottom: 30px; padding: 20px; background: #f9f9f9; border-radius: 8px;">
-                            <span class="word-pos">${meaning.partOfSpeech}</span>
-                            
-                            <div class="word-definition" style="margin-top: 15px;">
-                                <strong>Definition:</strong> ${meaning.definition}
-                            </div>
-                    `;
+    // ⭐ ADD ORIGIN SECTION
+    if (wordData.origin) {
+        html += `
+            <div style="margin-bottom: 25px; padding: 15px; background: #fff3cd; border-left: 4px solid #ffc107; border-radius: 5px;">
+                <strong style="color: #856404; font-size: 1.1rem;">📜 Origin:</strong>
+                <p style="color: #856404; margin-top: 8px; line-height: 1.6;">${wordData.origin}</p>
+            </div>
+        `;
+    }
 
-                    if (meaning.example) {
-                        html += `
-                            <div class="word-example">
-                                <strong>Example:</strong> "${meaning.example}"
-                            </div>
-                        `;
-                    }
+    if (wordData.meanings && wordData.meanings.length > 0) {
+        wordData.meanings.forEach((meaning, index) => {
+            html += `
+                <div style="margin-bottom: 30px; padding: 20px; background: #f9f9f9; border-radius: 8px;">
+                    <span class="word-pos">${meaning.partOfSpeech}</span>
+                    
+                    <div class="word-definition" style="margin-top: 15px;">
+                        <strong>Definition:</strong> ${meaning.definition}
+                    </div>
+            `;
 
-                    if (meaning.synonyms && meaning.synonyms.length > 0) {
-                        html += `
-                            <div style="margin-top: 15px;">
-                                <strong style="color: #0d3b66;">📚 Synonyms:</strong>
-                                <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px;">
-                                    ${meaning.synonyms.map(syn => `
-                                        <span style="background: #e3f2fd; padding: 5px 12px; border-radius: 15px; font-size: 0.9rem;">
-                                            ${syn}
-                                        </span>
-                                    `).join('')}
-                                </div>
-                            </div>
-                        `;
-                    }
-
-                    if (meaning.antonyms && meaning.antonyms.length > 0) {
-                        html += `
-                            <div style="margin-top: 15px;">
-                                <strong style="color: #0d3b66;">🔄 Antonyms:</strong>
-                                <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px;">
-                                    ${meaning.antonyms.map(ant => `
-                                        <span style="background: #ffebee; padding: 5px 12px; border-radius: 15px; font-size: 0.9rem;">
-                                            ${ant}
-                                        </span>
-                                    `).join('')}
-                                </div>
-                            </div>
-                        `;
-                    }
-
-                    html += '</div>';
-                });
-            } else {
-                html = `
-                    <div class="word-definition">
-                        <strong>Word:</strong> ${currentWord}<br><br>
-                        Loading definition...<br>
-                        You can practice pronunciation using the buttons below.
+            if (meaning.example) {
+                html += `
+                    <div class="word-example">
+                        <strong>Example:</strong> "${meaning.example}"
                     </div>
                 `;
             }
 
-            document.getElementById('modalContent').innerHTML = html;
+            if (meaning.synonyms && meaning.synonyms.length > 0) {
+                html += `
+                    <div style="margin-top: 15px;">
+                        <strong style="color: #0d3b66;">📚 Synonyms:</strong>
+                        <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px;">
+                            ${meaning.synonyms.map(syn => `
+                                <span style="background: #e3f2fd; padding: 5px 12px; border-radius: 15px; font-size: 0.9rem;">
+                                    ${syn}
+                                </span>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            }
+
+            if (meaning.antonyms && meaning.antonyms.length > 0) {
+                html += `
+                    <div style="margin-top: 15px;">
+                        <strong style="color: #0d3b66;">🔄 Antonyms:</strong>
+                        <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px;">
+                            ${meaning.antonyms.map(ant => `
+                                <span style="background: #ffebee; padding: 5px 12px; border-radius: 15px; font-size: 0.9rem;">
+                                    ${ant}
+                                </span>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            }
+
+            html += '</div>';
+        });
+    } else {
+        html = `
+            <div class="word-definition">
+                <strong>Word:</strong> ${currentWord}<br><br>
+                Loading definition...<br>
+                You can practice pronunciation using the buttons below.
+            </div>
+        `;
+    }
+
+    document.getElementById('modalContent').innerHTML = html;
+}
+
+// ⭐ NEW HELPER FUNCTION - Fetch word details with origin
+async function fetchWordDetails(word) {
+    try {
+        // Check Firestore cache first
+        const wordRef = db.collection('dictionary').doc(word.toLowerCase());
+        const wordDoc = await wordRef.get();
+
+        if (wordDoc.exists) {
+            const data = wordDoc.data();
+            return {
+                phonetic: data.phonetic || '',
+                origin: data.origin || null,
+                definition: data.meanings?.[0]?.definition || ''
+            };
         }
+
+        // If not in cache, fetch from Cloud Run
+        const response = await fetch(CLOUD_FUNCTION_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ data: { word: word } })
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to fetch word details');
+        }
+
+        const data = await response.json();
+        
+        if (data.result) {
+            // Cache it for future use
+            await wordRef.set({
+                ...data.result,
+                word: word.toLowerCase(),
+                cachedAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+
+            return {
+                phonetic: data.result.phonetic || '',
+                origin: data.result.origin || null,
+                definition: data.result.meanings?.[0]?.definition || ''
+            };
+        }
+
+        return {};
+    } catch (error) {
+        console.error('Error fetching word details:', error);
+        return {};
+    }
+}
+        
 
         // ===== CLOSE MODAL =====
         function closeModal() {
@@ -2598,76 +2659,177 @@ function displayFavorites() {
             }
         }
 
-        function submitSpelling() {
-            const userAnswer = document.getElementById('spelling-input').value.trim().toLowerCase();
-            const correctWord = currentSpellingWord.toLowerCase();
-            const feedbackDiv = document.getElementById('spelling-feedback');
+        async function submitSpelling() {
+    const userAnswer = document.getElementById('spelling-input').value.trim().toLowerCase();
+    const correctWord = currentSpellingWord.toLowerCase();
+    const feedbackDiv = document.getElementById('spelling-feedback');
+    
+    if (!userAnswer) {
+        feedbackDiv.innerHTML = '<div class="feedback error">⚠️ Please type a word before submitting</div>';
+        return;
+    }
+    
+    // Disable input while processing
+    document.getElementById('spelling-input').disabled = true;
+    
+    if (userAnswer === correctWord) {
+        spellingScore++;
+        
+        // Fetch word details to show origin
+        feedbackDiv.innerHTML = '<div class="loading">✅ Correct! Loading word details...</div>';
+        
+        try {
+            const wordDetails = await fetchWordDetails(currentSpellingWord);
             
-            if (!userAnswer) {
-                feedbackDiv.innerHTML = '<div class="feedback error">⚠️ Please type a word before submitting</div>';
-                return;
-            }
-            
-            if (userAnswer === correctWord) {
-                spellingScore++;
-                feedbackDiv.innerHTML = `
-                    <div class="feedback success">
-                        ✅ Correct! The word is: <strong>${currentSpellingWord}</strong>
-                    </div>
-                `;
-            } else {
-                spellingMistakes.push({
-                    word: currentSpellingWord,
-                    userAnswer: userAnswer
-                });
-                
-                feedbackDiv.innerHTML = `
-                    <div class="feedback error">
-                        ❌ Incorrect. You wrote: <strong>${userAnswer}</strong><br>
-                        Correct spelling: <strong>${currentSpellingWord}</strong>
-                    </div>
-                `;
-                
-                // Speak the correct word again
-                setTimeout(() => speakCurrentSpellingWord(), 1000);
-            }
-            
-            // Move to next word after delay
-            setTimeout(() => {
-                currentSpellingIndex++;
-                if (currentSpellingIndex < spellingWords.length) {
-                    loadSpellingWord();
-                } else {
-                    showSpellingResults();
-                }
-            }, 3000);
-        }
-
-        function skipSpellingWord() {
-            spellingMistakes.push({
-                word: currentSpellingWord,
-                userAnswer: '(skipped)'
-            });
-            
-            const feedbackDiv = document.getElementById('spelling-feedback');
             feedbackDiv.innerHTML = `
-                <div class="feedback" style="background: #fff3cd; border-color: #ffc107; color: #856404;">
-                    ⏭️ Skipped. The word was: <strong>${currentSpellingWord}</strong>
+                <div class="feedback success">
+                    ✅ <strong>Correct!</strong> The word is: <strong>${currentSpellingWord}</strong>
+                    
+                    ${wordDetails.phonetic ? `
+                        <div style="margin-top: 10px; font-style: italic; color: #666;">
+                            Pronunciation: ${wordDetails.phonetic}
+                        </div>
+                    ` : ''}
+                    
+                    ${wordDetails.origin ? `
+                        <div style="margin-top: 15px; padding: 12px; background: #fff3cd; border-left: 3px solid #ffc107; border-radius: 5px;">
+                            <strong style="color: #856404;">📜 Origin:</strong>
+                            <p style="color: #856404; margin-top: 5px; font-size: 0.95rem;">${wordDetails.origin}</p>
+                        </div>
+                    ` : ''}
+                    
+                    ${wordDetails.definition ? `
+                        <div style="margin-top: 10px; color: #0d3b66;">
+                            <strong>Definition:</strong> ${wordDetails.definition}
+                        </div>
+                    ` : ''}
                 </div>
             `;
-            
-            speakCurrentSpellingWord();
-            
-            setTimeout(() => {
-                currentSpellingIndex++;
-                if (currentSpellingIndex < spellingWords.length) {
-                    loadSpellingWord();
-                } else {
-                    showSpellingResults();
-                }
-            }, 2000);
+        } catch (error) {
+            feedbackDiv.innerHTML = `
+                <div class="feedback success">
+                    ✅ Correct! The word is: <strong>${currentSpellingWord}</strong>
+                </div>
+            `;
         }
-
+    } else {
+        spellingMistakes.push({
+            word: currentSpellingWord,
+            userAnswer: userAnswer
+        });
+        
+        // Fetch word details to show origin
+        feedbackDiv.innerHTML = '<div class="loading">❌ Incorrect. Loading word details...</div>';
+        
+        try {
+            const wordDetails = await fetchWordDetails(currentSpellingWord);
+            
+            feedbackDiv.innerHTML = `
+                <div class="feedback error">
+                    ❌ <strong>Incorrect.</strong> You wrote: <strong>${userAnswer}</strong><br>
+                    Correct spelling: <strong>${currentSpellingWord}</strong>
+                    
+                    ${wordDetails.phonetic ? `
+                        <div style="margin-top: 10px; font-style: italic; color: #333;">
+                            Pronunciation: ${wordDetails.phonetic}
+                        </div>
+                    ` : ''}
+                    
+                    ${wordDetails.origin ? `
+                        <div style="margin-top: 15px; padding: 12px; background: #fff3cd; border-left: 3px solid #ffc107; border-radius: 5px;">
+                            <strong style="color: #856404;">📜 Origin:</strong>
+                            <p style="color: #856404; margin-top: 5px; font-size: 0.95rem;">${wordDetails.origin}</p>
+                        </div>
+                    ` : ''}
+                    
+                    ${wordDetails.definition ? `
+                        <div style="margin-top: 10px; color: #333;">
+                            <strong>Definition:</strong> ${wordDetails.definition}
+                        </div>
+                    ` : ''}
+                </div>
+            `;
+        } catch (error) {
+            feedbackDiv.innerHTML = `
+                <div class="feedback error">
+                    ❌ Incorrect. You wrote: <strong>${userAnswer}</strong><br>
+                    Correct spelling: <strong>${currentSpellingWord}</strong>
+                </div>
+            `;
+        }
+        
+        // Speak the correct word again
+        setTimeout(() => speakCurrentSpellingWord(), 1000);
+    }
+    
+    // Move to next word after delay
+    setTimeout(() => {
+        document.getElementById('spelling-input').disabled = false;
+        currentSpellingIndex++;
+        if (currentSpellingIndex < spellingWords.length) {
+            loadSpellingWord();
+        } else {
+            showSpellingResults();
+        }
+    }, 5000); // 5 second delay to read origin
+}
+        
+        async function skipSpellingWord() {
+    spellingMistakes.push({
+        word: currentSpellingWord,
+        userAnswer: '(skipped)'
+    });
+    
+    const feedbackDiv = document.getElementById('spelling-feedback');
+    feedbackDiv.innerHTML = '<div class="loading">⏭️ Loading word details...</div>';
+    
+    try {
+        const wordDetails = await fetchWordDetails(currentSpellingWord);
+        
+        feedbackDiv.innerHTML = `
+            <div class="feedback" style="background: #fff3cd; border-color: #ffc107; color: #856404;">
+                ⏭️ <strong>Skipped.</strong> The word was: <strong>${currentSpellingWord}</strong>
+                
+                ${wordDetails.phonetic ? `
+                    <div style="margin-top: 10px; font-style: italic;">
+                        Pronunciation: ${wordDetails.phonetic}
+                    </div>
+                ` : ''}
+                
+                ${wordDetails.origin ? `
+                    <div style="margin-top: 15px; padding: 12px; background: #ffe8a1; border-left: 3px solid #ff9800; border-radius: 5px;">
+                        <strong>📜 Origin:</strong>
+                        <p style="margin-top: 5px; font-size: 0.95rem;">${wordDetails.origin}</p>
+                    </div>
+                ` : ''}
+                
+                ${wordDetails.definition ? `
+                    <div style="margin-top: 10px;">
+                        <strong>Definition:</strong> ${wordDetails.definition}
+                    </div>
+                ` : ''}
+            </div>
+        `;
+    } catch (error) {
+        feedbackDiv.innerHTML = `
+            <div class="feedback" style="background: #fff3cd; border-color: #ffc107; color: #856404;">
+                ⏭️ Skipped. The word was: <strong>${currentSpellingWord}</strong>
+            </div>
+        `;
+    }
+    
+    speakCurrentSpellingWord();
+    
+    setTimeout(() => {
+        currentSpellingIndex++;
+        if (currentSpellingIndex < spellingWords.length) {
+            loadSpellingWord();
+        } else {
+            showSpellingResults();
+        }
+    }, 4000);
+}
+        
         function showSpellingResults() {
             document.getElementById('spelling-game').style.display = 'none';
             const resultsDiv = document.getElementById('spelling-results');
