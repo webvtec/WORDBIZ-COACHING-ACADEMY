@@ -1069,90 +1069,90 @@
 
 
     <!-- Spelling Section -->
-        <div id="spelling-section" class="content-section">
-            <div class="word-database">
-                <div class="quiz-tabs">
-                    <button class="quiz-tab active" onclick="switchSpellingMode('practice')">Practice Spelling</button>
-                    <button class="quiz-tab" onclick="switchSpellingMode('live')">Live Spelling</button>
-                    <button class="quiz-tab" onclick="switchSpellingMode('leaderboard')">Spelling Leaderboard</button>
-                </div>
+<div id="spelling-section" class="content-section">
+    <div class="word-database">
+        <div class="quiz-tabs">
+            <button class="quiz-tab active" onclick="switchSpellingMode('practice')">Practice Spelling</button>
+            <button class="quiz-tab" onclick="switchSpellingMode('live')">Live Spelling</button>
+            <button class="quiz-tab" onclick="switchSpellingMode('leaderboard')">Spelling Leaderboard</button>
+        </div>
 
-                <!-- Practice Spelling Mode -->
-                <div id="practice-spelling-mode" class="quiz-mode active">
-                    <div id="spelling-container">
-                        <div class="welcome-section">
-                            <h2>🔤 Practice Spelling</h2>
-                            <p>Listen to the word and type what you hear. The AI will speak each word clearly.</p>
-                            
-                            <div style="margin: 20px 0;">
-                                <label style="display: block; margin-bottom: 10px; font-weight: bold;">Difficulty Level:</label>
-                                <select id="spelling-difficulty" style="padding: 10px; font-size: 1rem; border: 2px solid #0d3b66; border-radius: 5px; width: 200px;">
-                                    <option value="easy">Easy (3-5 letters)</option>
-                                    <option value="medium" selected>Medium (6-8 letters)</option>
-                                    <option value="hard">Hard (9+ letters)</option>
-                                </select>
-                            </div>
-                            
-                            <button class="practice-btn" onclick="startSpellingPractice()">Start Practice Spelling</button>
+        <!-- Practice Spelling Mode -->
+        <div id="practice-spelling-mode" class="quiz-mode active">
+            <div id="spelling-container">
+                <div class="welcome-section">
+                    <h2>🔤 Practice Spelling</h2>
+                    <p>Listen to the word and type what you hear. The AI will speak each word clearly.</p>
+                    
+                    <div style="margin: 20px 0;">
+                        <label style="display: block; margin-bottom: 10px; font-weight: bold;">Difficulty Level:</label>
+                        <select id="spelling-difficulty" style="padding: 10px; font-size: 1rem; border: 2px solid #0d3b66; border-radius: 5px; width: 200px;">
+                            <option value="easy">Easy (3-5 letters)</option>
+                            <option value="medium" selected>Medium (6-8 letters)</option>
+                            <option value="hard">Hard (9+ letters)</option>
+                        </select>
+                    </div>
+                    
+                    <button class="practice-btn" onclick="startSpellingPractice()">Start Practice Spelling</button>
+                </div>
+                
+                <div id="spelling-game" style="display: none;">
+                    <div class="quiz-question-card">
+                        <div class="quiz-score" id="spelling-score">Score: 0 / 0</div>
+                        <h3 id="spelling-progress">Word 1 of 10</h3>
+                        
+                        <div style="text-align: center; margin: 30px 0;">
+                            <button class="practice-btn" onclick="speakCurrentSpellingWord()" style="font-size: 1.3rem; padding: 20px 40px;">
+                                🔊 Play Word
+                            </button>
+                            <button class="practice-btn" onclick="speakWordInSentence()" style="font-size: 1.1rem; padding: 15px 30px; background: #28a745; margin-left: 10px;">
+                                💬 Use in Sentence
+                            </button>
+                            <p style="margin-top: 10px; color: #666; font-style: italic;">Listen to the word alone or in a sentence</p>
                         </div>
                         
-                        <div id="spelling-game" style="display: none;">
-                            <div class="quiz-question-card">
-                                <div class="quiz-score" id="spelling-score">Score: 0 / 0</div>
-                                <h3 id="spelling-progress">Word 1 of 10</h3>
-                                
-                                <div style="text-align: center; margin: 30px 0;">
-                                    <button class="practice-btn" onclick="speakCurrentSpellingWord()" style="font-size: 1.3rem; padding: 20px 40px;">
-                                        🔊 Play Word
-                                    </button>
-                                    <button class="practice-btn" onclick="speakWordInSentence()" style="font-size: 1.1rem; padding: 15px 30px; background: #28a745; margin-left: 10px;">
-                                        💬 Use in Sentence
-                                    </button>
-                                    <p style="margin-top: 10px; color: #666; font-style: italic;">Listen to the word alone or in a sentence</p>
-                                </div>
-                                
-                                <div class="form-group" style="margin: 30px 0;">
-                                    <label style="font-size: 1.2rem;">Type what you hear:</label>
-                                    <input type="text" id="spelling-input" 
-                                           placeholder="Type the word here..." 
-                                           style="width: 100%; padding: 15px; font-size: 1.3rem; text-align: center; border: 3px solid #0d3b66; border-radius: 8px; margin-top: 10px;"
-                                           onkeypress="if(event.key==='Enter') submitSpelling()">
-                                </div>
-                                
-                                <div style="text-align: center;">
-                                    <button class="practice-btn" onclick="submitSpelling()" style="font-size: 1.2rem; padding: 15px 50px;">
-                                        ✓ Submit Answer
-                                    </button>
-                                    <button class="practice-btn" onclick="skipSpellingWord()" style="background: #666; margin-left: 10px;">
-                                        ⏭️ Skip
-                                    </button>
-                                </div>
-                                
-                                <div id="spelling-feedback" style="margin-top: 20px;"></div>
-                            </div>
+                        <div class="form-group" style="margin: 30px 0;">
+                            <label style="font-size: 1.2rem;">Type what you hear:</label>
+                            <input type="text" id="spelling-input" 
+                                   placeholder="Type the word here..." 
+                                   style="width: 100%; padding: 15px; font-size: 1.3rem; text-align: center; border: 3px solid #0d3b66; border-radius: 8px; margin-top: 10px;"
+                                   onkeypress="if(event.key==='Enter') submitSpelling()">
                         </div>
                         
-                        <div id="spelling-results" style="display: none;"></div>
+                        <div style="text-align: center;">
+                            <button class="practice-btn" onclick="submitSpelling()" style="font-size: 1.2rem; padding: 15px 50px;">
+                                ✓ Submit Answer
+                            </button>
+                            <button class="practice-btn" onclick="skipSpellingWord()" style="background: #666; margin-left: 10px;">
+                                ⏭️ Skip
+                            </button>
+                        </div>
+                        
+                        <div id="spelling-feedback" style="margin-top: 20px;"></div>
                     </div>
                 </div>
-
-                <!-- Live Spelling Mode -->
-                <div id="live-spelling-mode" class="quiz-mode">
-                    <div class="welcome-section">
-                        <h2>🏆 Live Spelling</h2>
-                        <p>Coming soon! Compete with other students in real-time spelling competitions.</p>
-                    </div>
-                </div>
-
-                <!-- Spelling Leaderboard Mode -->
-                <div id="leaderboard-spelling-mode" class="quiz-mode">
-                    <div class="welcome-section">
-                        <h2>📊 Spelling Leaderboard</h2>
-                        <p>Coming soon! See the top spellers and track your ranking.</p>
-                    </div>
-                </div>
+                
+                <div id="spelling-results" style="display: none;"></div>
             </div>
         </div>
+
+        <!-- Live Spelling Mode -->
+        <div id="live-spelling-mode" class="quiz-mode">
+            <div class="welcome-section">
+                <h2>🏆 Live Spelling</h2>
+                <p>Coming soon! Compete with other students in real-time spelling competitions.</p>
+            </div>
+        </div>
+
+        <!-- Spelling Leaderboard Mode -->
+        <div id="leaderboard-spelling-mode" class="quiz-mode">
+            <div class="welcome-section">
+                <h2>📊 Spelling Leaderboard</h2>
+                <p>Coming soon! See the top spellers and track your ranking.</p>
+            </div>
+        </div>
+    </div>
+</div>
     <script>
         // ===== FIREBASE CONFIGURATION =====
         const firebaseConfig = {
