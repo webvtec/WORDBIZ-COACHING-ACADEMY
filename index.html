@@ -2021,33 +2021,22 @@ function displayFavorites() {
             </div>
         ` : ''}
         <div class="favorites-grid">
-            ${userFavorites.map(fav => {
-                // Skip invalid favorites
-                if (!fav.word || !fav.question || fav.question === 'undefined') {
-                    return '';
-                }
-                
-                return `
-                    <div class="favorite-card">
-                        <button class="delete-btn" onclick="removeFavorite('${fav.word}')">×</button>
-                        <h3 style="color: #0d3b66; margin-bottom: 10px;">${fav.word}</h3>
-                        <p style="color: #666; margin-bottom: 10px;"><strong>Q:</strong> ${fav.question}</p>
-                        ${fav.options && Array.isArray(fav.options) && fav.options.length > 0 ? `
-                            <div style="margin: 10px 0;">
-                                ${fav.options.map((opt, idx) => `
-                                    <p style="padding: 8px; margin: 5px 0; border-radius: 5px; font-size: 0.9rem; 
-                                       border: 2px solid ${idx === fav.correctAnswer ? '#28a745' : '#ddd'};
-                                       background: ${idx === fav.correctAnswer ? '#d4edda' : '#f9f9f9'};">
-                                        ${opt} ${idx === fav.correctAnswer ? '✓' : ''}
-                                    </p>
-                                `).join('')}
-                            </div>
-                        ` : `
-                            <p style="color: #28a745; margin-top: 10px;"><strong>Answer:</strong> ${fav.correctDefinition || 'No answer available'}</p>
-                        `}
+            ${userFavorites.map(fav => `
+                <div class="favorite-card">
+                    <button class="delete-btn" onclick="removeFavorite('${fav.word}')">×</button>
+                    <h3 style="color: #0d3b66; margin-bottom: 10px;">${fav.word}</h3>
+                    <p style="color: #666; margin-bottom: 10px;"><strong>Q:</strong> ${fav.question}</p>
+                    <div style="margin: 10px 0;">
+                        ${fav.options.map((opt, idx) => `
+                            <p style="padding: 8px; margin: 5px 0; border-radius: 5px; font-size: 0.9rem; 
+                               border: 2px solid ${idx === fav.correctAnswer ? '#28a745' : '#ddd'};
+                               background: ${idx === fav.correctAnswer ? '#d4edda' : '#f9f9f9'};">
+                                ${opt} ${idx === fav.correctAnswer ? '✓' : ''}
+                            </p>
+                        `).join('')}
                     </div>
-                `;
-            }).filter(html => html !== '').join('')}
+                </div>
+            `).join('')}
         </div>
     `;
 }
