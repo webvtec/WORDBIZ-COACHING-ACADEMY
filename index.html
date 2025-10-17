@@ -1977,24 +1977,41 @@ auth.onAuthStateChanged(async user => {
         // Get the current question from the quiz
         const question = currentQuiz.questions[currentQuestionIndex];
         
-        await favoriteRef.set({
+        // Check if this word is in the incorrect answers to get the user's wrong answer
+        const incorrectAnswer = userIncorrect.find(inc => inc.word === word);
+        
+        const favoriteData = {
             word: word,
             question: question.question,
             options: question.options,
             correctAnswer: question.correctAnswer,
             correctDefinition: question.options[question.correctAnswer],
             addedAt: firebase.firestore.FieldValue.serverTimestamp()
-        });
+        };
+        
+        // If this was an incorrect answer, save which option they chose
+        if (incorrectAnswer && incorrectAnswer.userAnswerIndex !== undefined) {
+            favoriteData.userAnswerIndex = incorrectAnswer.userAnswerIndex;
+        }
+        
+        await favoriteRef.set(favoriteData);
         
         element.textContent = '❤️';
         element.classList.add('active');
-        userFavorites.push({
+        
+        const newFavorite = {
             word: word,
             question: question.question,
             options: question.options,
             correctAnswer: question.correctAnswer,
             correctDefinition: question.options[question.correctAnswer]
-        });
+        };
+        
+        if (incorrectAnswer && incorrectAnswer.userAnswerIndex !== undefined) {
+            newFavorite.userAnswerIndex = incorrectAnswer.userAnswerIndex;
+        }
+        
+        userFavorites.push(newFavorite);
     }
 
     displayFavorites();
