@@ -1959,44 +1959,51 @@ auth.onAuthStateChanged(async user => {
     }
 }
         
-        async function toggleFavorite(word, questionData, element) {
-            if (!currentUser) {
-                alert('Please sign in to save favorites');
-                return;
-            }
+       async function toggleFavorite(word, questionData, element) {
+    if (!currentUser) {
+        alert('Please sign in to save favorites');
+        return;
+    }
 
-            const favoriteRef = db.collection('users').doc(currentUser.uid).collection('favorites').doc(word);
-            const favoriteDoc = await favoriteRef.get();
+    const favoriteRef = db.collection('users').doc(currentUser.uid).collection('favorites').doc(word);
+    const favoriteDoc = await favoriteRef.get();
 
-            if (favoriteDoc.exists) {
-                await favoriteRef.delete();
-                element.textContent = '�';
-                element.classList.remove('active');
-                userFavorites = userFavorites.filter(fav => fav.word !== word);
-            } else {
-                // Save the entire question with all options
-                const question = currentQuiz.questions[currentQuestionIndex];
-                await favoriteRef.set({
-                    word: word,
-                    question: question.question,
-                    options: question.options,
-                    correctAnswer: question.correctAnswer,
-                    correctDefinition: question.options[question.correctAnswer],
-                    addedAt: firebase.firestore.FieldValue.serverTimestamp()
-                });
-                element.textContent = '❤️';
-                element.classList.add('active');
-                userFavorites.push({
-                    word: word,
-                    question: question.question,
-                    options: question.options,
-                    correctAnswer: question.correctAnswer,
-                    correctDefinition: question.options[question.correctAnswer]
-                });
-            }
+    if (favoriteDoc.exists) {
+        await favoriteRef.delete();
+        element.textContent = '🤍';
+        element.classList.remove('active');
+        userFavorites = userFavorites.filter(fav => fav.word !== word);
+    } else {
+        // Save the entire question with all options
+        const question = currentQuiz.questions[currentQuestionIndex];
+        
+        // Find if this was a question they got wrong (check if it exists in incorrect answers)
+        const incorrectAnswer = userIncorrect.find(inc => inc.word === word);
+        
+        await favoriteRef.set({
+            word: word,
+            question: question.question,
+            options: question.options,
+            correctAnswer: question.correctAnswer,
+            correctDefinition: question.options[question.correctAnswer],
+            userAnswerIndex: incorrectAnswer ? incorrectAnswer.userAnswerIndex : undefined,
+            addedAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        
+        element.textContent = '❤️';
+        element.classList.add('active');
+        userFavorites.push({
+            word: word,
+            question: question.question,
+            options: question.options,
+            correctAnswer: question.correctAnswer,
+            correctDefinition: question.options[question.correctAnswer],
+            userAnswerIndex: incorrectAnswer ? incorrectAnswer.userAnswerIndex : undefined
+        });
+    }
 
-            displayFavorites();
-        }
+    displayFavorites();
+}
         
 async function startFavoritesQuiz() {
     // Only use favorites that have full question data
@@ -2034,7 +2041,7 @@ async function startFavoritesQuiz() {
     showQuestion('favorites');
 }
 
-        function displayFavorites() {
+function displayFavorites() {
     const container = document.getElementById('favorites-container');
     const btn = document.getElementById('favoritesQuizBtn');
 
@@ -2077,8 +2084,8 @@ async function startFavoritesQuiz() {
                         <div style="margin: 10px 0;">
                             ${fav.options.map((opt, idx) => `
                                 <p style="padding: 5px; margin: 3px 0; border-radius: 5px; font-size: 0.9rem; 
-                                   background: ${idx === fav.correctAnswer ? '#d4edda' : '#f9f9f9'};">
-                                    ${opt} ${idx === fav.correctAnswer ? '✓' : ''}
+                                   background: ${idx === fav.correctAnswer ? '#d4edda' : (fav.userAnswerIndex !== undefined && idx === fav.userAnswerIndex ? '#f8d7da' : '#f9f9f9')};">
+                                    ${opt} ${idx === fav.correctAnswer ? '✓' : (fav.userAnswerIndex !== undefined && idx === fav.userAnswerIndex ? '✗' : '')}
                                 </p>
                             `).join('')}
                         </div>
