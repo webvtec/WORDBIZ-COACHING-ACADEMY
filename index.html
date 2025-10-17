@@ -127,12 +127,41 @@
         }
 
         .sidebar-header {
-            padding: 20px;
+            padding: 30px 20px;
             background: #0d3b66;
             color: white;
-            font-size: 1.5rem;
-            font-weight: bold;
             border-bottom: 2px solid rgba(255,255,255,0.2);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .sidebar-user-info {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .sidebar-user-info .user-avatar {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: #ffd700;
+            color: #0d3b66;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 2rem;
+        }
+        
+        .sidebar-user-info span {
+            color: white;
+            font-size: 1.2rem;
+            font-weight: bold;
+            text-align: center;
         }
 
         .sidebar-item {
@@ -742,30 +771,7 @@
             background: #0a2f4d;
         }
 
-        .user-info {
-            display: none;
-            align-items: center;
-            gap: 10px;
-            color: white;
-            font-weight: bold;
-        }
-
-        .user-info.active {
-            display: flex;
-        }
-
-        .user-avatar {
-            width: 35px;
-            height: 35px;
-            border-radius: 50%;
-            background: #ffd700;
-            color: #0d3b66;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-        }
-
+    
         .favorites-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
@@ -860,7 +866,12 @@
     
      <!-- Sidebar -->
     <div class="sidebar" id="sidebar">
-        <div class="sidebar-header">MENU</div>
+        <div class="sidebar-header" id="sidebarHeader">
+            <div class="sidebar-user-info" id="sidebarUserInfo">
+                <div class="user-avatar" id="sidebarUserAvatar">?</div>
+                <span id="sidebarUserName">Guest</span>
+            </div>
+        </div>
         <div class="sidebar-item" onclick="navigateTo('home')">Home</div>
         <div class="sidebar-item" onclick="navigateTo('student-dashboard')">Student Dashboard</div>
         <div class="sidebar-item" onclick="navigateTo('coach-dashboard')">Coach Dashboard</div>
@@ -885,10 +896,6 @@
                     <span></span>
                     <span></span>
                     <span></span>
-                </div>
-                <div class="user-info" id="userInfo">
-                    <div class="user-avatar" id="userAvatar">?</div>
-                    <span id="userName">Guest</span>
                 </div>
             </div>
         </div>
@@ -1754,16 +1761,17 @@
 
         function updateUIForAuthenticatedUser(user) {
             const displayName = user.displayName || user.email.split('@')[0];
-            document.getElementById('userName').textContent = displayName;
-            document.getElementById('userAvatar').textContent = displayName.charAt(0).toUpperCase();
-            document.getElementById('userInfo').classList.add('active');
+            document.getElementById('sidebarUserName').textContent = displayName;
+            document.getElementById('sidebarUserAvatar').textContent = displayName.charAt(0).toUpperCase();
             
             document.getElementById('sidebar-signin').style.display = 'none';
             document.getElementById('sidebar-signout').style.display = 'block';
         }
         
         function updateUIForGuestUser() {
-            document.getElementById('userInfo').classList.remove('active');
+            document.getElementById('sidebarUserName').textContent = 'Guest';
+            document.getElementById('sidebarUserAvatar').textContent = '?';
+            
             document.getElementById('sidebar-signin').style.display = 'block';
             document.getElementById('sidebar-signout').style.display = 'none';
             userFavorites = [];
@@ -1772,7 +1780,8 @@
             document.getElementById('favorites-container').innerHTML = '<div class="loading">Please sign in to save favorites</div>';
             document.getElementById('incorrect-container').innerHTML = '<div class="loading">Please sign in to track incorrect answers</div>';
         }
-
+        
+       
         // ===== QUIZ FUNCTIONS =====
         function switchQuizMode(mode) {
             document.querySelectorAll('.quiz-tab').forEach(tab => {
