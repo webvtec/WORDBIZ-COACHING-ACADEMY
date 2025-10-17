@@ -1106,18 +1106,22 @@
                 if (e.key === 'Enter') searchWord();
             });
 
-            // Listen for auth state changes
-            auth.onAuthStateChanged(user => {
-                if (user) {
-                    currentUser = user;
-                    updateUIForAuthenticatedUser(user);
-                    loadUserFavorites(user.uid);
-                    loadUserIncorrect(user.uid);
-                } else {
-                    currentUser = null;
-                    updateUIForGuestUser();
-                }
-            });
+// Listen for auth state changes
+auth.onAuthStateChanged(async user => {
+    if (user) {
+        currentUser = user;
+        updateUIForAuthenticatedUser(user);
+        
+        // Clean up any invalid data first
+        await cleanupInvalidFavorites();
+        
+        loadUserFavorites(user.uid);
+        loadUserIncorrect(user.uid);
+    } else {
+        currentUser = null;
+        updateUIForGuestUser();
+    }
+      });
         });
         
         // ===== NAVIGATION =====
@@ -1922,21 +1926,35 @@
         }
 
         // ===== FAVORITES MANAGEMENT =====
-       async function loadUserFavorites(userId) {
-            try {
-                const snapshot = await db.collection('users').doc(userId).collection('favorites').get();
-                userFavorites = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                displayFavorites();
-                
-                // Enable quiz button if enough favorites
-                const btn = document.getElementById('favoritesQuizBtn');
-                if (btn) {
-                    btn.disabled = userFavorites.length < 5;
-                }
-            } catch (error) {
-                console.error('Error loading favorites:', error);
-            }
+      async function loadUserFavorites(userId) {
+    try {
+        const snapshot = await db.collection('users').doc(userId).collection('favorites').get();
+        
+        // Filter out invalid favorites
+        userFavorites = snapshot.docs
+            .map(doc => ({ id: doc.id, ...doc.data() }))
+            .filter(fav => {
+                // Only keep valid favorites with proper data
+                return fav.word && 
+                       fav.question && 
+                       fav.question !== 'undefined' && 
+                       fav.options && 
+                       Array.isArray(fav.options) && 
+                       fav.options.length > 0 &&
+                       typeof fav.correctAnswer === 'number';
+            });
+        
+        displayFavorites();
+        
+        // Enable quiz button if enough favorites
+        const btn = document.getElementById('favoritesQuizBtn');
+        if (btn) {
+            btn.disabled = userFavorites.length < 5;
         }
+    } catch (error) {
+        console.error('Error loading favorites:', error);
+    }
+}
         
         async function toggleFavorite(word, questionData, element) {
             if (!currentUser) {
@@ -2003,26 +2021,33 @@ function displayFavorites() {
             </div>
         ` : ''}
         <div class="favorites-grid">
-            ${userFavorites.map(fav => `
-                <div class="favorite-card">
-                    <button class="delete-btn" onclick="removeFavorite('${fav.word}')">×</button>
-                    <h3 style="color: #0d3b66; margin-bottom: 10px;">${fav.word}</h3>
-                    <p style="color: #666; margin-bottom: 10px;"><strong>Q:</strong> ${fav.question}</p>
-                    ${fav.options && fav.options.length > 0 ? `
-                        <div style="margin: 10px 0;">
-                            ${fav.options.map((opt, idx) => `
-                                <p style="padding: 8px; margin: 5px 0; border-radius: 5px; font-size: 0.9rem; 
-                                   border: 2px solid ${idx === fav.correctAnswer ? '#28a745' : '#ddd'};
-                                   background: ${idx === fav.correctAnswer ? '#d4edda' : '#f9f9f9'};">
-                                    ${opt} ${idx === fav.correctAnswer ? '✓ Correct' : ''}
-                                </p>
-                            `).join('')}
-                        </div>
-                    ` : `
-                        <p style="color: #28a745; margin-top: 10px;"><strong>Answer:</strong> ${fav.correctDefinition || 'No definition available'}</p>
-                    `}
-                </div>
-            `).join('')}
+            ${userFavorites.map(fav => {
+                // Skip invalid favorites
+                if (!fav.word || !fav.question || fav.question === 'undefined') {
+                    return '';
+                }
+                
+                return `
+                    <div class="favorite-card">
+                        <button class="delete-btn" onclick="removeFavorite('${fav.word}')">×</button>
+                        <h3 style="color: #0d3b66; margin-bottom: 10px;">${fav.word}</h3>
+                        <p style="color: #666; margin-bottom: 10px;"><strong>Q:</strong> ${fav.question}</p>
+                        ${fav.options && Array.isArray(fav.options) && fav.options.length > 0 ? `
+                            <div style="margin: 10px 0;">
+                                ${fav.options.map((opt, idx) => `
+                                    <p style="padding: 8px; margin: 5px 0; border-radius: 5px; font-size: 0.9rem; 
+                                       border: 2px solid ${idx === fav.correctAnswer ? '#28a745' : '#ddd'};
+                                       background: ${idx === fav.correctAnswer ? '#d4edda' : '#f9f9f9'};">
+                                        ${opt} ${idx === fav.correctAnswer ? '✓' : ''}
+                                    </p>
+                                `).join('')}
+                            </div>
+                        ` : `
+                            <p style="color: #28a745; margin-top: 10px;"><strong>Answer:</strong> ${fav.correctDefinition || 'No answer available'}</p>
+                        `}
+                    </div>
+                `;
+            }).filter(html => html !== '').join('')}
         </div>
     `;
 }
@@ -2197,6 +2222,39 @@ function displayFavorites() {
 
             showQuestion('incorrect');
         }
+
+        async function cleanupInvalidFavorites() {
+    if (!currentUser) return;
+    
+    try {
+        const snapshot = await db.collection('users').doc(currentUser.uid).collection('favorites').get();
+        
+        const deletions = [];
+        snapshot.docs.forEach(doc => {
+            const data = doc.data();
+            // Delete if data is invalid
+            if (!data.word || 
+                !data.question || 
+                data.question === 'undefined' || 
+                !data.options || 
+                !Array.isArray(data.options) || 
+                data.options.length === 0 ||
+                typeof data.correctAnswer !== 'number') {
+                console.log('Deleting invalid favorite:', doc.id);
+                deletions.push(doc.ref.delete());
+            }
+        });
+        
+        if (deletions.length > 0) {
+            await Promise.all(deletions);
+            console.log(`Cleaned up ${deletions.length} invalid favorites`);
+            // Reload favorites
+            await loadUserFavorites(currentUser.uid);
+        }
+    } catch (error) {
+        console.error('Error cleaning up favorites:', error);
+    }
+}
     </script>
 </body>
 </html>
