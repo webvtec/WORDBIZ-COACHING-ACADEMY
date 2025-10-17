@@ -1863,35 +1863,53 @@ auth.onAuthStateChanged(async user => {
 }
 
         async function checkAnswer(selectedIndex, quizType = 'practice') {
-            const question = currentQuiz.questions[currentQuestionIndex];
-            const options = document.querySelectorAll('.quiz-option');
+    const question = currentQuiz.questions[currentQuestionIndex];
+    const options = document.querySelectorAll('.quiz-option');
+    
+    options.forEach(opt => opt.style.pointerEvents = 'none');
+    
+    const isCorrect = selectedIndex === question.correctAnswer;
+    
+    if (isCorrect) {
+        options[selectedIndex].classList.add('correct');
+        quizScore++;
+    } else {
+        options[selectedIndex].classList.add('wrong');
+        options[question.correctAnswer].classList.add('correct');
+        
+        // Save incorrect question with user's answer
+        if (currentUser) {
+            await saveIncorrectQuestion(question, quizType, selectedIndex);
+        }
+        
+        // Update the favorite if it exists to include the wrong answer
+        if (currentUser) {
+            const favoriteRef = db.collection('users').doc(currentUser.uid).collection('favorites').doc(question.word);
+            const favoriteDoc = await favoriteRef.get();
             
-            options.forEach(opt => opt.style.pointerEvents = 'none');
-            
-            const isCorrect = selectedIndex === question.correctAnswer;
-            
-            if (isCorrect) {
-                options[selectedIndex].classList.add('correct');
-                quizScore++;
-            } else {
-                options[selectedIndex].classList.add('wrong');
-                options[question.correctAnswer].classList.add('correct');
+            if (favoriteDoc.exists) {
+                await favoriteRef.update({
+                    userAnswerIndex: selectedIndex
+                });
                 
-                if (currentUser) {
-                    await saveIncorrectQuestion(question, quizType, selectedIndex);
+                // Update local favorites array
+                const favIndex = userFavorites.findIndex(fav => fav.word === question.word);
+                if (favIndex !== -1) {
+                    userFavorites[favIndex].userAnswerIndex = selectedIndex;
                 }
             }
-            
-            setTimeout(() => {
-                currentQuestionIndex++;
-                if (currentQuestionIndex < currentQuiz.questions.length) {
-                    showQuestion(quizType);
-                } else {
-                    showQuizResults();
-                }
-            }, 3000);
         }
-
+    }
+    
+    setTimeout(() => {
+        currentQuestionIndex++;
+        if (currentQuestionIndex < currentQuiz.questions.length) {
+            showQuestion(quizType);
+        } else {
+            showQuizResults();
+        }
+    }, 3000);
+}
         function showQuizResults() {
             const container = document.getElementById('practice-quiz-container');
             const percentage = Math.round((quizScore / currentQuiz.questions.length) * 100);
