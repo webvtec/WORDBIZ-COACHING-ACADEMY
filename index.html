@@ -1840,8 +1840,8 @@
                 <div class="quiz-question-card" style="position: relative;">
                     ${currentUser ? `
                         <span class="favorite-heart ${isFavorited ? 'active' : ''}" 
-                              onclick="toggleFavorite('${question.word}', '${(question.correctDefinition || question.options[question.correctAnswer]).replace(/'/g, "\\'")}', this)">
-                            ${isFavorited ? '❤️' : '🤍'}
+                              onclick="toggleFavorite('${question.word}', null, this)">
+                            ${isFavorited ? '❤️' : '�'}
                         </span>
                     ` : ''}
                     <div class="quiz-score">Score: ${quizScore} / ${currentQuestionIndex}</div>
@@ -1874,7 +1874,7 @@
                 options[question.correctAnswer].classList.add('correct');
                 
                 if (currentUser) {
-                    await saveIncorrectQuestion(question, quizType);
+                    await saveIncorrectQuestion(question, quizType, selectedIndex);
                 }
             }
             
@@ -1938,7 +1938,7 @@
             }
         }
         
-        async function toggleFavorite(word, definition, element) {
+        async function toggleFavorite(word, questionData, element) {
             if (!currentUser) {
                 alert('Please sign in to save favorites');
                 return;
@@ -1949,71 +1949,83 @@
 
             if (favoriteDoc.exists) {
                 await favoriteRef.delete();
-                element.textContent = '🤍';
+                element.textContent = '�';
                 element.classList.remove('active');
                 userFavorites = userFavorites.filter(fav => fav.word !== word);
             } else {
+                // Save the entire question with all options
+                const question = currentQuiz.questions[currentQuestionIndex];
                 await favoriteRef.set({
                     word: word,
-                    definition: definition,
+                    question: question.question,
+                    options: question.options,
+                    correctAnswer: question.correctAnswer,
+                    correctDefinition: question.options[question.correctAnswer],
                     addedAt: firebase.firestore.FieldValue.serverTimestamp()
                 });
                 element.textContent = '❤️';
                 element.classList.add('active');
-                userFavorites.push({ word, definition });
+                userFavorites.push({
+                    word: word,
+                    question: question.question,
+                    options: question.options,
+                    correctAnswer: question.correctAnswer,
+                    correctDefinition: question.options[question.correctAnswer]
+                });
             }
 
             displayFavorites();
         }
+        
+function displayFavorites() {
+    const container = document.getElementById('favorites-container');
+    const btn = document.getElementById('favoritesQuizBtn');
 
-       function displayFavorites() {
-            const container = document.getElementById('favorites-container');
-            const btn = document.getElementById('favoritesQuizBtn');
+    if (!currentUser) {
+        container.innerHTML = '<div class="loading">Please sign in to save favorites</div>';
+        if (btn) btn.disabled = true;
+        return;
+    }
 
-            if (!currentUser) {
-                container.innerHTML = '<div class="loading">Please sign in to save favorites</div>';
-                btn.disabled = true;
-                return;
-            }
+    if (userFavorites.length === 0) {
+        container.innerHTML = '<div class="loading">No favorites yet. Add some words from quizzes!</div>';
+        if (btn) btn.disabled = true;
+        return;
+    }
 
-            if (userFavorites.length === 0) {
-                container.innerHTML = '<div class="loading">No favorites yet. Add some words from quizzes!</div>';
-                btn.disabled = true;
-                return;
-            }
+    const minQuestions = Math.min(userFavorites.length, 5);
+    if (btn) btn.disabled = userFavorites.length < minQuestions;
 
-            if (userFavorites.length < 5) {
-                container.innerHTML = `
-                    <div class="loading">
-                        You have ${userFavorites.length} favorite(s). Add at least 5 favorites to generate a quiz.
-                    </div>
-                    <div class="favorites-grid">
-                        ${userFavorites.map(fav => `
-                            <div class="favorite-card">
-                                <button class="delete-btn" onclick="removeFavorite('${fav.word}')">×</button>
-                                <h3 style="color: #0d3b66; margin-bottom: 10px;">${fav.word}</h3>
-                                <p style="color: #666;">${fav.definition}</p>
-                            </div>
-                        `).join('')}
-                    </div>
-                `;
-                btn.disabled = true;
-                return;
-            }
-
-            btn.disabled = false;
-            container.innerHTML = `
-                <div class="favorites-grid">
-                    ${userFavorites.map(fav => `
-                        <div class="favorite-card">
-                            <button class="delete-btn" onclick="removeFavorite('${fav.word}')">×</button>
-                            <h3 style="color: #0d3b66; margin-bottom: 10px;">${fav.word}</h3>
-                            <p style="color: #666;">${fav.definition}</p>
+    container.innerHTML = `
+        ${userFavorites.length < 5 ? `
+            <div class="loading">
+                You have ${userFavorites.length} favorite(s). Add at least ${5 - userFavorites.length} more to generate a quiz.
+            </div>
+        ` : ''}
+        <div class="favorites-grid">
+            ${userFavorites.map(fav => `
+                <div class="favorite-card">
+                    <button class="delete-btn" onclick="removeFavorite('${fav.word}')">×</button>
+                    <h3 style="color: #0d3b66; margin-bottom: 10px;">${fav.word}</h3>
+                    <p style="color: #666; margin-bottom: 10px;"><strong>Q:</strong> ${fav.question}</p>
+                    ${fav.options && fav.options.length > 0 ? `
+                        <div style="margin: 10px 0;">
+                            ${fav.options.map((opt, idx) => `
+                                <p style="padding: 8px; margin: 5px 0; border-radius: 5px; font-size: 0.9rem; 
+                                   border: 2px solid ${idx === fav.correctAnswer ? '#28a745' : '#ddd'};
+                                   background: ${idx === fav.correctAnswer ? '#d4edda' : '#f9f9f9'};">
+                                    ${opt} ${idx === fav.correctAnswer ? '✓ Correct' : ''}
+                                </p>
+                            `).join('')}
                         </div>
-                    `).join('')}
+                    ` : `
+                        <p style="color: #28a745; margin-top: 10px;"><strong>Answer:</strong> ${fav.correctDefinition || 'No definition available'}</p>
+                    `}
                 </div>
-            `;
-        }
+            `).join('')}
+        </div>
+    `;
+}
 
         async function removeFavorite(word) {
             if (!currentUser) return;
@@ -2023,42 +2035,26 @@
             displayFavorites();
         }
 
-        async function startFavoritesQuiz() {
-            if (userFavorites.length < 5) {
-                alert('You need at least 5 favorites to generate a quiz');
+       async function startFavoritesQuiz() {
+            const minQuestions = Math.min(userFavorites.length, 5);
+            if (userFavorites.length < minQuestions) {
+                alert(`You need at least ${minQuestions} favorites to generate a quiz`);
                 return;
             }
 
-            navigateTo('quiz');
+            navigateTo('quiz', true);
             document.getElementById('practice-quiz-container').innerHTML = '<div class="loading">🎲 Generating quiz from your favorites...</div>';
 
-            const quizQuestions = [];
-            const selectedFavorites = userFavorites.sort(() => 0.5 - Math.random()).slice(0, 5);
+            // Use the exact saved questions with their options
+            const selectedFavorites = [...userFavorites].sort(() => 0.5 - Math.random()).slice(0, minQuestions);
 
-            for (const fav of selectedFavorites) {
-                const wordRef = db.collection('dictionary').doc(fav.word.toLowerCase());
-                const wordDoc = await wordRef.get();
-
-                if (wordDoc.exists) {
-                    const correctDef = fav.definition;
-
-                    const wrongOptions = userFavorites
-                        .filter(f => f.word !== fav.word)
-                        .sort(() => 0.5 - Math.random())
-                        .slice(0, 3)
-                        .map(f => f.definition);
-
-                    const options = [correctDef, ...wrongOptions].sort(() => 0.5 - Math.random());
-
-                    quizQuestions.push({
-                        word: fav.word,
-                        question: `What is the definition of "${fav.word}"?`,
-                        options: options,
-                        correctAnswer: options.indexOf(correctDef),
-                        correctDefinition: correctDef
-                    });
-                }
-            }
+            const quizQuestions = selectedFavorites.map(fav => ({
+                word: fav.word,
+                question: fav.question,
+                options: fav.options,
+                correctAnswer: fav.correctAnswer,
+                correctDefinition: fav.correctDefinition
+            }));
 
             currentQuiz = { questions: quizQuestions };
             currentQuestionIndex = 0;
@@ -2084,25 +2080,38 @@
             }
         }
         
-        async function saveIncorrectQuestion(question, quizType) {
+       async function saveIncorrectQuestion(question, quizType, selectedIndex) {
             if (!currentUser) return;
 
             const incorrectRef = db.collection('users').doc(currentUser.uid).collection('incorrectQuestions');
             
-            await incorrectRef.add({
+            // Save complete question with all options
+            const docRef = await incorrectRef.add({
                 word: question.word,
                 question: question.question,
-                correctAnswer: question.options[question.correctAnswer],
-                userAnswer: question.options[question.userAnswer] || '',
+                options: question.options,
+                correctAnswer: question.correctAnswer,
+                correctDefinition: question.options[question.correctAnswer],
+                userAnswer: question.options[selectedIndex],
+                userAnswerIndex: selectedIndex,
                 quizType: quizType,
                 savedAt: firebase.firestore.FieldValue.serverTimestamp()
             });
 
-            userIncorrect.push(question);
+            userIncorrect.push({
+                id: docRef.id,
+                word: question.word,
+                question: question.question,
+                options: question.options,
+                correctAnswer: question.correctAnswer,
+                correctDefinition: question.options[question.correctAnswer],
+                userAnswer: question.options[selectedIndex]
+            });
+            
             displayIncorrect();
         }
 
-        function displayIncorrect() {
+       function displayIncorrect() {
             const container = document.getElementById('incorrect-container');
             const btn = document.getElementById('incorrectQuizBtn');
 
@@ -2118,40 +2127,40 @@
                 return;
             }
 
-            if (userIncorrect.length < 5) {
-                container.innerHTML = `
-                    <div class="loading">
-                        You have ${userIncorrect.length} incorrect answer(s). You need at least 5 to generate a practice quiz.
-                    </div>
-                    <div class="favorites-grid">
-                        ${userIncorrect.map(inc => `
-                            <div class="favorite-card">
-                                <button class="delete-btn" onclick="removeIncorrect('${inc.id}')">×</button>
-                                <h3 style="color: #0d3b66; margin-bottom: 10px;">${inc.word}</h3>
-                                <p style="color: #666;"><strong>Q:</strong> ${inc.question}</p>
-                                <p style="color: #28a745; margin-top: 10px;"><strong>Correct:</strong> ${inc.correctAnswer}</p>
-                            </div>
-                        `).join('')}
-                    </div>
-                `;
-                btn.disabled = true;
-                return;
-            }
+            const minQuestions = Math.min(userIncorrect.length, 5);
+            btn.disabled = userIncorrect.length < minQuestions;
 
-            btn.disabled = false;
             container.innerHTML = `
+                ${userIncorrect.length < 5 ? `
+                    <div class="loading">
+                        You have ${userIncorrect.length} incorrect answer(s). Add at least ${5 - userIncorrect.length} more to generate a practice quiz.
+                    </div>
+                ` : ''}
                 <div class="favorites-grid">
                     ${userIncorrect.map(inc => `
                         <div class="favorite-card">
                             <button class="delete-btn" onclick="removeIncorrect('${inc.id}')">×</button>
                             <h3 style="color: #0d3b66; margin-bottom: 10px;">${inc.word}</h3>
-                            <p style="color: #666;"><strong>Q:</strong> ${inc.question}</p>
-                            <p style="color: #28a745; margin-top: 10px;"><strong>Correct:</strong> ${inc.correctAnswer}</p>
+                            <p style="color: #666; margin-bottom: 10px;"><strong>Q:</strong> ${inc.question}</p>
+                            ${inc.options ? `
+                                <div style="margin: 10px 0;">
+                                    ${inc.options.map((opt, idx) => `
+                                        <p style="padding: 5px; margin: 3px 0; border-radius: 5px; font-size: 0.9rem; 
+                                           background: ${idx === inc.correctAnswer ? '#d4edda' : (opt === inc.userAnswer ? '#f8d7da' : '#f9f9f9')};">
+                                            ${opt} ${idx === inc.correctAnswer ? '✓' : (opt === inc.userAnswer ? '✗' : '')}
+                                        </p>
+                                    `).join('')}
+                                </div>
+                            ` : `
+                                <p style="color: #dc3545; margin-top: 5px;"><strong>Your answer:</strong> ${inc.userAnswer}</p>
+                                <p style="color: #28a745; margin-top: 5px;"><strong>Correct:</strong> ${inc.correctDefinition}</p>
+                            `}
                         </div>
                     `).join('')}
                 </div>
             `;
         }
+              
 
         async function removeIncorrect(id) {
             if (!currentUser) return;
@@ -2162,41 +2171,25 @@
         }
 
         async function startIncorrectQuiz() {
-            if (userIncorrect.length < 5) {
-                alert('You need at least 5 incorrect answers to generate a practice quiz');
+            const minQuestions = Math.min(userIncorrect.length, 5);
+            if (userIncorrect.length < minQuestions) {
+                alert(`You need at least ${minQuestions} incorrect answers to generate a practice quiz`);
                 return;
             }
 
-            navigateTo('quiz');
+            navigateTo('quiz', true);
             document.getElementById('practice-quiz-container').innerHTML = '<div class="loading">🎲 Generating quiz from your incorrect answers...</div>';
 
-            const quizQuestions = [];
-            const selectedIncorrect = userIncorrect.sort(() => 0.5 - Math.random()).slice(0, 5);
+            // Use the exact saved questions with their options
+            const selectedIncorrect = [...userIncorrect].sort(() => 0.5 - Math.random()).slice(0, minQuestions);
 
-            for (const inc of selectedIncorrect) {
-                const wordRef = db.collection('dictionary').doc(inc.word.toLowerCase());
-                const wordDoc = await wordRef.get();
-
-                if (wordDoc.exists) {
-                    const correctDef = inc.correctAnswer;
-
-                    const wrongOptions = userIncorrect
-                        .filter(i => i.word !== inc.word)
-                        .sort(() => 0.5 - Math.random())
-                        .slice(0, 3)
-                        .map(i => i.correctAnswer);
-
-                    const options = [correctDef, ...wrongOptions].sort(() => 0.5 - Math.random());
-
-                    quizQuestions.push({
-                        word: inc.word,
-                        question: inc.question,
-                        options: options,
-                        correctAnswer: options.indexOf(correctDef),
-                        correctDefinition: correctDef
-                    });
-                }
-            }
+            const quizQuestions = selectedIncorrect.map(inc => ({
+                word: inc.word,
+                question: inc.question,
+                options: inc.options,
+                correctAnswer: inc.correctAnswer,
+                correctDefinition: inc.correctDefinition
+            }));
 
             currentQuiz = { questions: quizQuestions };
             currentQuestionIndex = 0;
