@@ -866,25 +866,27 @@
     <div class="overlay" id="overlay" onclick="toggleSidebar()"></div>
     
      <!-- Sidebar -->
-    <div class="sidebar" id="sidebar">
-        <div class="sidebar-header" id="sidebarHeader">
-            <div class="sidebar-user-info" id="sidebarUserInfo">
-                <div class="user-avatar" id="sidebarUserAvatar">?</div>
-                <span id="sidebarUserName">Guest</span>
-            </div>
+<div class="sidebar" id="sidebar">
+    <div class="sidebar-header" id="sidebarHeader">
+        <div class="sidebar-user-info" id="sidebarUserInfo">
+            <div class="user-avatar" id="sidebarUserAvatar">?</div>
+            <span id="sidebarUserName">Guest</span>
         </div>
-        <div class="sidebar-item" onclick="navigateTo('home')">Home</div>
-        <div class="sidebar-item" onclick="navigateTo('student-dashboard')">Student Dashboard</div>
-        <div class="sidebar-item" onclick="navigateTo('coach-dashboard')">Coach Dashboard</div>
-        <div class="sidebar-item" onclick="navigateTo('word-database')">Word Database</div>
-        <div class="sidebar-item" onclick="navigateTo('leaderboards')">Leaderboards</div>
-         <div class="sidebar-item" onclick="navigateTo('favorites')">My Favorites</div>
-        <div class="sidebar-item" onclick="navigateTo('incorrect-quiz')">Incorrect Quiz</div>
-        <div class="sidebar-item" onclick="navigateTo('about')">About Us</div>
-        <div class="sidebar-item" onclick="navigateTo('settings')">Settings</div>
-        <div class="sidebar-item sign-in" id="sidebar-signin" onclick="showAuthModal()">SIGN IN</div>
-        <div class="sidebar-item" id="sidebar-signout" style="display:none;" onclick="signOut()">Sign Out</div>
     </div>
+    <div class="sidebar-item" onclick="navigateTo('home')">Home</div>
+    <div class="sidebar-item" onclick="navigateTo('student-dashboard')">Student Dashboard</div>
+    <div class="sidebar-item" onclick="navigateTo('coach-dashboard')">Coach Dashboard</div>
+    <div class="sidebar-item" onclick="navigateTo('word-database')">Word Database</div>
+    <div class="sidebar-item" onclick="navigateTo('leaderboards')">Leaderboards</div>
+    <div class="sidebar-item" onclick="navigateTo('favorites')">Quiz Favorites</div>
+    <div class="sidebar-item" onclick="navigateTo('incorrect-quiz')">Quiz Incorrect</div>
+    <div class="sidebar-item" onclick="navigateTo('spelling-favorites')">Spelling Favorites</div>
+    <div class="sidebar-item" onclick="navigateTo('spelling-incorrect')">Spelling Incorrect</div>
+    <div class="sidebar-item" onclick="navigateTo('about')">About Us</div>
+    <div class="sidebar-item" onclick="navigateTo('settings')">Settings</div>
+    <div class="sidebar-item sign-in" id="sidebar-signin" onclick="showAuthModal()">SIGN IN</div>
+    <div class="sidebar-item" id="sidebar-signout" style="display:none;" onclick="signOut()">Sign Out</div>
+</div>
 
 
   
@@ -1156,6 +1158,37 @@
                 </div>
             </div>
         </div>
+
+
+    <!-- Spelling Favorites Section -->
+<div id="spelling-favorites-section" class="content-section">
+    <div class="word-database">
+        <div class="database-header">
+            <h2>⭐ MY SPELLING FAVORITES</h2>
+            <button class="practice-btn" id="spellingFavoritesQuizBtn" onclick="startSpellingFavoritesQuiz()" disabled>
+                Practice Spelling Favorites
+            </button>
+        </div>
+        <div id="spelling-favorites-container" class="loading">
+            Please sign in to save spelling favorites
+        </div>
+    </div>
+</div>
+
+<!-- Spelling Incorrect Section -->
+<div id="spelling-incorrect-section" class="content-section">
+    <div class="word-database">
+        <div class="database-header">
+            <h2>🔤 SPELLING MISTAKES</h2>
+            <button class="practice-btn" id="spellingIncorrectQuizBtn" onclick="startSpellingIncorrectQuiz()" disabled>
+                Practice Spelling Mistakes
+            </button>
+        </div>
+        <div id="spelling-incorrect-container" class="loading">
+            Please sign in to track spelling mistakes
+        </div>
+    </div>
+</div>
     <script>
         // ===== FIREBASE CONFIGURATION =====
         const firebaseConfig = {
@@ -1186,6 +1219,8 @@
         let quizScore = 0;
         let userFavorites = [];
         let userIncorrect = [];
+        let userSpellingFavorites = [];
+        let userSpellingIncorrect = [];
 
 
          // ===== SPELLING PRACTICE FUNCTIONS =====
@@ -1212,64 +1247,73 @@ auth.onAuthStateChanged(async user => {
         currentUser = user;
         updateUIForAuthenticatedUser(user);
         
-        // Clean up any invalid data first
         await cleanupInvalidFavorites();
         
         loadUserFavorites(user.uid);
         loadUserIncorrect(user.uid);
+        loadUserSpellingFavorites(user.uid);
+        loadUserSpellingIncorrect(user.uid);
     } else {
         currentUser = null;
         updateUIForGuestUser();
     }
-      });
+});
         });
         
         // ===== NAVIGATION =====
         async function navigateTo(section, skipSidebarClose = false) {
-            // Check if user needs to be logged in
-            if ((section === 'favorites' || section === 'incorrect-quiz') && !currentUser) {
-                alert('Please sign in to access this feature');
-                showAuthModal();
-                return;
-            }
-            
-            document.querySelectorAll('.content-section').forEach(sec => {
-                sec.classList.remove('active');
+    // Check if user needs to be logged in
+    if ((section === 'favorites' || section === 'incorrect-quiz' || 
+         section === 'spelling-favorites' || section === 'spelling-incorrect') && !currentUser) {
+        alert('Please sign in to access this feature');
+        showAuthModal();
+        return;
+    }
+    
+    document.querySelectorAll('.content-section').forEach(sec => {
+        sec.classList.remove('active');
+    });
+    
+    const sectionId = section + '-section';
+    const targetSection = document.getElementById(sectionId);
+    if (targetSection) {
+        targetSection.classList.add('active');
+    }
+    
+    if (section === 'word-database') {
+        if (allWords.length === 0) {
+            loadWords().then(() => {
+                displayWords(allWords.slice(0, 100));
+                document.getElementById('statusMessage').innerHTML = 
+                    `✅ ${allWords.length.toLocaleString()} WORDS LOADED! SELECT A LETTER TO FILTER OR SEARCH FOR SPECIFIC WORDS.`;
             });
-            
-            const sectionId = section + '-section';
-            const targetSection = document.getElementById(sectionId);
-            if (targetSection) {
-                targetSection.classList.add('active');
-            }
-            
-            if (section === 'word-database') {
-                if (allWords.length === 0) {
-                    loadWords().then(() => {
-                        displayWords(allWords.slice(0, 100));
-                        document.getElementById('statusMessage').innerHTML = 
-                            `✅ ${allWords.length.toLocaleString()} WORDS LOADED! SELECT A LETTER TO FILTER OR SEARCH FOR SPECIFIC WORDS.`;
-                    });
-                } else {
-                    displayWords(allWords.slice(0, 100));
-                    document.getElementById('statusMessage').innerHTML = 
-                        `✅ ${allWords.length.toLocaleString()} WORDS LOADED! SELECT A LETTER TO FILTER OR SEARCH FOR SPECIFIC WORDS.`;
-                }
-            }
-            
-            if (section === 'favorites' && currentUser) {
-                displayFavorites();
-            }
-            
-            if (section === 'incorrect-quiz' && currentUser) {
-                displayIncorrect();
-            }
-            
-           // Only close sidebar if it came from sidebar menu (not from nav bar)
-            if (!skipSidebarClose) {
-                toggleSidebar(true);
-            }
+        } else {
+            displayWords(allWords.slice(0, 100));
+            document.getElementById('statusMessage').innerHTML = 
+                `✅ ${allWords.length.toLocaleString()} WORDS LOADED! SELECT A LETTER TO FILTER OR SEARCH FOR SPECIFIC WORDS.`;
         }
+    }
+    
+    if (section === 'favorites' && currentUser) {
+        displayFavorites();
+    }
+    
+    if (section === 'incorrect-quiz' && currentUser) {
+        displayIncorrect();
+    }
+    
+    if (section === 'spelling-favorites' && currentUser) {
+        displaySpellingFavorites();
+    }
+    
+    if (section === 'spelling-incorrect' && currentUser) {
+        displaySpellingIncorrect();
+    }
+    
+    if (!skipSidebarClose) {
+        toggleSidebar(true);
+    }
+}
         
        function toggleSidebar(forceClose = false) {
             const sidebar = document.getElementById('sidebar');
@@ -1960,18 +2004,22 @@ async function fetchWordDetails(word) {
             document.getElementById('sidebar-signout').style.display = 'block';
         }
         
-        function updateUIForGuestUser() {
-            document.getElementById('sidebarUserName').textContent = 'Guest';
-            document.getElementById('sidebarUserAvatar').textContent = '?';
-            
-            document.getElementById('sidebar-signin').style.display = 'block';
-            document.getElementById('sidebar-signout').style.display = 'none';
-            userFavorites = [];
-            userIncorrect = [];
-            
-            document.getElementById('favorites-container').innerHTML = '<div class="loading">Please sign in to save favorites</div>';
-            document.getElementById('incorrect-container').innerHTML = '<div class="loading">Please sign in to track incorrect answers</div>';
-        }
+       function updateUIForGuestUser() {
+    document.getElementById('sidebarUserName').textContent = 'Guest';
+    document.getElementById('sidebarUserAvatar').textContent = '?';
+    
+    document.getElementById('sidebar-signin').style.display = 'block';
+    document.getElementById('sidebar-signout').style.display = 'none';
+    userFavorites = [];
+    userIncorrect = [];
+    userSpellingFavorites = [];
+    userSpellingIncorrect = [];
+    
+    document.getElementById('favorites-container').innerHTML = '<div class="loading">Please sign in to save favorites</div>';
+    document.getElementById('incorrect-container').innerHTML = '<div class="loading">Please sign in to track incorrect answers</div>';
+    document.getElementById('spelling-favorites-container').innerHTML = '<div class="loading">Please sign in to save spelling favorites</div>';
+    document.getElementById('spelling-incorrect-container').innerHTML = '<div class="loading">Please sign in to track spelling mistakes</div>';
+}
         
        
         // ===== QUIZ FUNCTIONS =====
@@ -2739,7 +2787,7 @@ function displayFavorites() {
     }
 }
         
-        async function submitSpelling() {
+      async function submitSpelling() {
     const userAnswer = document.getElementById('spelling-input').value.trim().toLowerCase();
     const correctWord = currentSpellingWord.toLowerCase();
     const feedbackDiv = document.getElementById('spelling-feedback');
@@ -2765,6 +2813,13 @@ function displayFavorites() {
                 <div class="feedback success">
                     ✅ <strong>Correct!</strong> The word is: <strong>${currentSpellingWord}</strong>
                     
+                    ${currentUser ? `
+                        <button class="practice-btn" onclick="saveSpellingFavorite('${currentSpellingWord}', '${userAnswer}', true)" 
+                                style="margin-top: 15px; background: #ffd700; color: #0d3b66;">
+                            ⭐ Add to Favorites
+                        </button>
+                    ` : ''}
+                    
                     ${wordDetails.phonetic ? `
                         <div style="margin-top: 10px; font-style: italic; color: #666;">
                             Pronunciation: ${wordDetails.phonetic}
@@ -2789,10 +2844,21 @@ function displayFavorites() {
             feedbackDiv.innerHTML = `
                 <div class="feedback success">
                     ✅ Correct! The word is: <strong>${currentSpellingWord}</strong>
+                    ${currentUser ? `
+                        <button class="practice-btn" onclick="saveSpellingFavorite('${currentSpellingWord}', '${userAnswer}', true)" 
+                                style="margin-top: 15px; background: #ffd700; color: #0d3b66;">
+                            ⭐ Add to Favorites
+                        </button>
+                    ` : ''}
                 </div>
             `;
         }
     } else {
+        // Save incorrect answer automatically
+        if (currentUser) {
+            await saveSpellingIncorrect(currentSpellingWord, userAnswer);
+        }
+        
         spellingMistakes.push({
             word: currentSpellingWord,
             userAnswer: userAnswer
@@ -2808,6 +2874,8 @@ function displayFavorites() {
                 <div class="feedback error">
                     ❌ <strong>Incorrect.</strong> You wrote: <strong>${userAnswer}</strong><br>
                     Correct spelling: <strong>${currentSpellingWord}</strong>
+                    
+                    ${currentUser ? '<p style="margin-top: 10px; color: #721c24; font-style: italic;">✅ Automatically saved to Spelling Mistakes</p>' : ''}
                     
                     ${wordDetails.phonetic ? `
                         <div style="margin-top: 10px; font-style: italic; color: #333;">
@@ -2834,6 +2902,7 @@ function displayFavorites() {
                 <div class="feedback error">
                     ❌ Incorrect. You wrote: <strong>${userAnswer}</strong><br>
                     Correct spelling: <strong>${currentSpellingWord}</strong>
+                    ${currentUser ? '<p style="margin-top: 10px; color: #721c24; font-style: italic;">✅ Automatically saved to Spelling Mistakes</p>' : ''}
                 </div>
             `;
         }
@@ -2853,7 +2922,6 @@ function displayFavorites() {
         }
     }, 5000); // 5 second delay to read origin
 }
-        
         async function skipSpellingWord() {
     spellingMistakes.push({
         word: currentSpellingWord,
@@ -2996,6 +3064,229 @@ function displayFavorites() {
                 document.getElementById('leaderboard-spelling-mode').classList.add('active');
             }
         }
+
+        // ===== SPELLING FAVORITES FUNCTIONS =====
+async function loadUserSpellingFavorites(userId) {
+    try {
+        const snapshot = await db.collection('users').doc(userId).collection('spellingFavorites').get();
+        userSpellingFavorites = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        displaySpellingFavorites();
+        
+        const btn = document.getElementById('spellingFavoritesQuizBtn');
+        if (btn) {
+            btn.disabled = userSpellingFavorites.length < 5;
+        }
+    } catch (error) {
+        console.error('Error loading spelling favorites:', error);
+    }
+}
+
+async function saveSpellingFavorite(word, userAnswer, wasCorrect) {
+    if (!currentUser) return;
+    
+    try {
+        const favoriteRef = db.collection('users').doc(currentUser.uid).collection('spellingFavorites').doc(word);
+        
+        await favoriteRef.set({
+            word: word,
+            userAnswer: userAnswer,
+            wasCorrect: wasCorrect,
+            addedAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        
+        userSpellingFavorites.push({
+            id: word,
+            word: word,
+            userAnswer: userAnswer,
+            wasCorrect: wasCorrect
+        });
+        
+        displaySpellingFavorites();
+    } catch (error) {
+        console.error('Error saving spelling favorite:', error);
+    }
+}
+
+function displaySpellingFavorites() {
+    const container = document.getElementById('spelling-favorites-container');
+    const btn = document.getElementById('spellingFavoritesQuizBtn');
+
+    if (!currentUser) {
+        container.innerHTML = '<div class="loading">Please sign in to save spelling favorites</div>';
+        if (btn) btn.disabled = true;
+        return;
+    }
+
+    if (userSpellingFavorites.length === 0) {
+        container.innerHTML = '<div class="loading">No spelling favorites yet. Star words from spelling practice to add them here!</div>';
+        if (btn) btn.disabled = true;
+        return;
+    }
+
+    if (btn) {
+        btn.disabled = userSpellingFavorites.length < 5;
+    }
+
+    container.innerHTML = `
+        ${userSpellingFavorites.length < 5 ? `
+            <div class="loading">
+                You have ${userSpellingFavorites.length} favorite(s). Add at least ${5 - userSpellingFavorites.length} more to generate a quiz.
+            </div>
+        ` : ''}
+        <div class="favorites-grid">
+            ${userSpellingFavorites.map(fav => `
+                <div class="favorite-card">
+                    <button class="delete-btn" onclick="removeSpellingFavorite('${fav.id}')">×</button>
+                    <h3 style="color: #0d3b66; margin-bottom: 10px;">📝 ${fav.word}</h3>
+                    ${fav.userAnswer ? `
+                        <p style="color: #666; margin: 5px 0;"><strong>Your answer:</strong> ${fav.userAnswer}</p>
+                    ` : ''}
+                    <p style="color: ${fav.wasCorrect ? '#28a745' : '#dc3545'}; margin-top: 10px; font-weight: bold;">
+                        ${fav.wasCorrect ? '✅ Spelled Correctly' : '❌ Needs Practice'}
+                    </p>
+                </div>
+            `).join('')}
+        </div>
+    `;
+}
+
+async function removeSpellingFavorite(id) {
+    if (!currentUser) return;
+
+    await db.collection('users').doc(currentUser.uid).collection('spellingFavorites').doc(id).delete();
+    userSpellingFavorites = userSpellingFavorites.filter(fav => fav.id !== id);
+    displaySpellingFavorites();
+}
+
+async function startSpellingFavoritesQuiz() {
+    if (userSpellingFavorites.length < 5) {
+        alert('You need at least 5 spelling favorites to generate a quiz');
+        return;
+    }
+
+    navigateTo('spelling', true);
+    
+    const selected = [...userSpellingFavorites].sort(() => 0.5 - Math.random()).slice(0, Math.min(10, userSpellingFavorites.length));
+    
+    spellingWords = selected.map(fav => fav.word);
+    currentSpellingIndex = 0;
+    spellingScore = 0;
+    spellingMistakes = [];
+    
+    document.querySelector('#spelling-container .welcome-section').style.display = 'none';
+    document.getElementById('spelling-game').style.display = 'block';
+    document.getElementById('spelling-results').style.display = 'none';
+    
+    loadSpellingWord();
+}
+
+// ===== SPELLING INCORRECT FUNCTIONS =====
+async function loadUserSpellingIncorrect(userId) {
+    try {
+        const snapshot = await db.collection('users').doc(userId).collection('spellingIncorrect').get();
+        userSpellingIncorrect = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        displaySpellingIncorrect();
+        
+        const btn = document.getElementById('spellingIncorrectQuizBtn');
+        if (btn) {
+            btn.disabled = userSpellingIncorrect.length < 5;
+        }
+    } catch (error) {
+        console.error('Error loading spelling incorrect:', error);
+    }
+}
+
+async function saveSpellingIncorrect(word, userAnswer) {
+    if (!currentUser) return;
+    
+    try {
+        const incorrectRef = db.collection('users').doc(currentUser.uid).collection('spellingIncorrect');
+        
+        await incorrectRef.add({
+            word: word,
+            userAnswer: userAnswer,
+            savedAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        
+        userSpellingIncorrect.push({
+            word: word,
+            userAnswer: userAnswer
+        });
+        
+        displaySpellingIncorrect();
+    } catch (error) {
+        console.error('Error saving spelling incorrect:', error);
+    }
+}
+
+function displaySpellingIncorrect() {
+    const container = document.getElementById('spelling-incorrect-container');
+    const btn = document.getElementById('spellingIncorrectQuizBtn');
+
+    if (!currentUser) {
+        container.innerHTML = '<div class="loading">Please sign in to track spelling mistakes</div>';
+        if (btn) btn.disabled = true;
+        return;
+    }
+
+    if (userSpellingIncorrect.length === 0) {
+        container.innerHTML = '<div class="loading">No spelling mistakes yet. Practice spelling to track your progress!</div>';
+        if (btn) btn.disabled = true;
+        return;
+    }
+
+    if (btn) {
+        btn.disabled = userSpellingIncorrect.length < 5;
+    }
+
+    container.innerHTML = `
+        ${userSpellingIncorrect.length < 5 ? `
+            <div class="loading">
+                You have ${userSpellingIncorrect.length} mistake(s). Add at least ${5 - userSpellingIncorrect.length} more to generate a practice quiz.
+            </div>
+        ` : ''}
+        <div class="favorites-grid">
+            ${userSpellingIncorrect.map((inc, index) => `
+                <div class="favorite-card">
+                    <button class="delete-btn" onclick="removeSpellingIncorrect('${inc.id || index}')">×</button>
+                    <h3 style="color: #0d3b66; margin-bottom: 10px;">📝 ${inc.word}</h3>
+                    <p style="color: #dc3545; margin: 5px 0;"><strong>Your answer:</strong> ${inc.userAnswer}</p>
+                    <p style="color: #28a745; margin-top: 10px;"><strong>Correct spelling:</strong> ${inc.word}</p>
+                </div>
+            `).join('')}
+        </div>
+    `;
+}
+
+async function removeSpellingIncorrect(id) {
+    if (!currentUser) return;
+
+    await db.collection('users').doc(currentUser.uid).collection('spellingIncorrect').doc(id).delete();
+    userSpellingIncorrect = userSpellingIncorrect.filter(inc => inc.id !== id);
+    displaySpellingIncorrect();
+}
+
+async function startSpellingIncorrectQuiz() {
+    if (userSpellingIncorrect.length < 5) {
+        alert('You need at least 5 spelling mistakes to generate a practice quiz');
+        return;
+    }
+
+    navigateTo('spelling', true);
+    
+    const selected = [...userSpellingIncorrect].sort(() => 0.5 - Math.random()).slice(0, Math.min(10, userSpellingIncorrect.length));
+    
+    spellingWords = selected.map(inc => inc.word);
+    currentSpellingIndex = 0;
+    spellingScore = 0;
+    spellingMistakes = [];
+    
+    document.querySelector('#spelling-container .welcome-section').style.display = 'none';
+    document.getElementById('spelling-game').style.display = 'block';
+    document.getElementById('spelling-results').style.display = 'none';
+    
+    loadSpellingWord();
+}
     </script>
 </body>
 </html>
