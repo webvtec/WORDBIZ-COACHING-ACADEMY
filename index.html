@@ -1953,17 +1953,27 @@
             });
 
 // Listen for auth state changes
+// Listen for auth state changes
 auth.onAuthStateChanged(async user => {
     if (user) {
         currentUser = user;
         updateUIForAuthenticatedUser(user);
         
+        // Load all user data
         await cleanupInvalidFavorites();
         
-        loadUserFavorites(user.uid);
-        loadUserIncorrect(user.uid);
-        loadUserSpellingFavorites(user.uid);
-        loadUserSpellingIncorrect(user.uid);
+        // Load collections in parallel
+        await Promise.all([
+            loadUserFavorites(user.uid),
+            loadUserIncorrect(user.uid),
+            loadUserSpellingFavorites(user.uid),
+            loadUserSpellingIncorrect(user.uid)
+        ]);
+        
+        // If user is on dashboard, refresh it
+        if (document.getElementById('student-dashboard-section').classList.contains('active')) {
+            loadUserDashboard();
+        }
     } else {
         currentUser = null;
         updateUIForGuestUser();
@@ -1975,7 +1985,8 @@ auth.onAuthStateChanged(async user => {
         async function navigateTo(section, skipSidebarClose = false) {
     // Check if user needs to be logged in
     if ((section === 'favorites' || section === 'incorrect-quiz' || 
-         section === 'spelling-favorites' || section === 'spelling-incorrect') && !currentUser) {
+         section === 'spelling-favorites' || section === 'spelling-incorrect' || 
+         section === 'student-dashboard') && !currentUser) {
         alert('Please sign in to access this feature');
         showAuthModal();
         return;
@@ -2019,6 +2030,11 @@ auth.onAuthStateChanged(async user => {
     
     if (section === 'spelling-incorrect' && currentUser) {
         displaySpellingIncorrect();
+    }
+    
+    // ADD THIS: Load dashboard when navigating to it
+    if (section === 'student-dashboard' && currentUser) {
+        await loadUserDashboard();
     }
     
     if (!skipSidebarClose) {
@@ -4171,28 +4187,35 @@ async function addCurrentSpellingToFavorites() {
 
 
         // ===== DASHBOARD FUNCTIONS =====
-function goToUserDashboard() {
+async function goToUserDashboard() {
     if (!currentUser) {
         showAuthModal();
         return;
     }
     
-    // Load user data and navigate to dashboard
-    loadUserDashboard();
+    // Navigate to dashboard first
     navigateTo('student-dashboard');
+    
+    // Then load user data (with loading state)
+    await loadUserDashboard();
 }
 
 async function loadUserDashboard() {
     if (!currentUser) return;
     
     try {
+        // Show loading state
+        document.getElementById('dashboard-name').textContent = 'Loading...';
+        document.getElementById('dashboard-email').textContent = 'Loading...';
+        
+        // Get user document
         const userDoc = await db.collection('users').doc(currentUser.uid).get();
         const userData = userDoc.data();
         
         // Update dashboard header
-        document.getElementById('dashboard-student-name').textContent = userData.name || 'Student';
-        document.getElementById('dashboard-name').textContent = userData.name || 'Student';
-        document.getElementById('dashboard-email').textContent = userData.email || '';
+        const displayName = userData?.name || currentUser.displayName || 'Student';
+        document.getElementById('dashboard-name').textContent = displayName;
+        document.getElementById('dashboard-email').textContent = userData?.email || currentUser.email || '';
         
         // Update avatar with Google photo or initials
         const dashboardAvatar = document.getElementById('dashboard-avatar');
@@ -4201,43 +4224,54 @@ async function loadUserDashboard() {
             dashboardAvatar.textContent = '';
         } else {
             dashboardAvatar.style.backgroundImage = 'none';
-            dashboardAvatar.textContent = (userData.name || 'S').charAt(0).toUpperCase();
+            dashboardAvatar.textContent = displayName.charAt(0).toUpperCase();
         }
         
         // Format join date
-        if (userData.createdAt) {
+        if (userData?.createdAt) {
             const joinDate = userData.createdAt.toDate();
             document.getElementById('dashboard-join-date').textContent = 
                 `Member since: ${joinDate.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}`;
             document.getElementById('display-joined').textContent = 
                 joinDate.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+        } else {
+            // Fallback for accounts without createdAt
+            document.getElementById('dashboard-join-date').textContent = 'Member since: Recently joined';
+            document.getElementById('display-joined').textContent = 'Recently joined';
         }
         
         // Update profile fields
-        document.getElementById('display-name').textContent = userData.name || 'N/A';
-        document.getElementById('edit-name').value = userData.name || '';
+        document.getElementById('display-name').textContent = displayName;
+        document.getElementById('edit-name').value = displayName;
         
-        document.getElementById('display-email').textContent = userData.email || 'N/A';
+        document.getElementById('display-email').textContent = userData?.email || currentUser.email || 'N/A';
         
-        document.getElementById('display-age').textContent = userData.age || 'N/A';
-        document.getElementById('edit-age').value = userData.age || '';
+        document.getElementById('display-age').textContent = userData?.age || 'Not specified';
+        document.getElementById('edit-age').value = userData?.age || '';
         
-        document.getElementById('display-country').textContent = userData.country || 'Not specified';
-        document.getElementById('edit-country').value = userData.country || '';
+        document.getElementById('display-country').textContent = userData?.country || 'Not specified';
+        document.getElementById('edit-country').value = userData?.country || '';
         
         document.getElementById('display-usertype').textContent = 
-            userData.userType ? userData.userType.charAt(0).toUpperCase() + userData.userType.slice(1) : 'Student';
+            userData?.userType ? userData.userType.charAt(0).toUpperCase() + userData.userType.slice(1) : 'Student';
         
-        // Update stats
-        document.getElementById('stat-quiz-favorites').textContent = userFavorites.length;
-        document.getElementById('stat-quiz-incorrect').textContent = userIncorrect.length;
-        document.getElementById('stat-spelling-favorites').textContent = userSpellingFavorites.length;
-        document.getElementById('stat-spelling-incorrect').textContent = userSpellingIncorrect.length;
+        // Update stats (wait for them to be loaded)
+        // Give it a moment for the collections to load
+        setTimeout(() => {
+            document.getElementById('stat-quiz-favorites').textContent = userFavorites.length;
+            document.getElementById('stat-quiz-incorrect').textContent = userIncorrect.length;
+            document.getElementById('stat-spelling-favorites').textContent = userSpellingFavorites.length;
+            document.getElementById('stat-spelling-incorrect').textContent = userSpellingIncorrect.length;
+        }, 500);
         
     } catch (error) {
         console.error('Error loading dashboard:', error);
+        // Show error state
+        document.getElementById('dashboard-name').textContent = 'Error loading profile';
+        document.getElementById('dashboard-email').textContent = 'Please try refreshing';
     }
 }
+        
 function toggleEditMode() {
     // Hide display elements, show edit inputs
     document.getElementById('display-name').style.display = 'none';
