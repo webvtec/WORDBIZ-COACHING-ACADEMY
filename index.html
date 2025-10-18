@@ -1078,45 +1078,47 @@
                     <button class="quiz-tab" onclick="switchSpellingMode('leaderboard')">Spelling Leaderboard</button>
                 </div>
 
-                <!-- Practice Spelling Mode -->
-                <div id="practice-spelling-mode" class="quiz-mode active">
-                    <div id="spelling-container">
-                        <div class="welcome-section">
-                            <h2>🔤 Practice Spelling</h2>
-                            <p>Listen to the word and type what you hear. The AI will speak each word clearly.</p>
-                            
-                            <div style="margin: 20px 0;">
-                                <label style="display: block; margin-bottom: 10px; font-weight: bold;">Difficulty Level:</label>
-                                <select id="spelling-difficulty" style="padding: 10px; font-size: 1rem; border: 2px solid #0d3b66; border-radius: 5px; width: 200px;">
-                                    <option value="easy">Easy (3-5 letters)</option>
-                                    <option value="medium" selected>Medium (6-8 letters)</option>
-                                    <option value="hard">Hard (9+ letters)</option>
-                                </select>
-                            </div>
-                            
-                            <button class="practice-btn" onclick="startSpellingPractice()">Start Practice Spelling</button>
-                        </div>
-                        
-                        <div id="spelling-game" style="display: none;">
-                            <div class="quiz-question-card">
-                                <div class="quiz-score" id="spelling-score">Score: 0 / 0</div>
-                                <h3 id="spelling-progress">Word 1 of 10</h3>
-                                <div style="text-align: center; margin: 30px 0;">
-    <button class="practice-btn" onclick="speakCurrentSpellingWord()" style="font-size: 1.3rem; padding: 20px 40px;">
-        🔊 Play Word
-    </button>
-    <button class="practice-btn" onclick="speakWordInSentence()" style="font-size: 1.1rem; padding: 15px 30px; background: #28a745; margin-left: 10px;">
-    💬 Use in Sentence
-     </button>
-     <button class="practice-btn" onclick="showSpellingWordDetails()" style="font-size: 1.1rem; padding: 15px 30px; background: #17a2b8; margin-left: 10px;">
-     📖 Word Details
-     </button>
-     <button class="practice-btn" id="add-spelling-favorite-btn" onclick="addCurrentSpellingToFavorites()" style="font-size: 1.1rem; padding: 15px 30px; background: #ffd700; color: #0d3b66; margin-left: 10px; display: none;">
-     ⭐ Add to Favorites
-     </button>
-      <p style="margin-top: 10px; color: #666; font-style: italic;">Listen to the word alone, in a sentence, see details, or add to favorites</p>
-                              
-                                     </div>
+               <!-- Practice Spelling Mode -->
+<div id="practice-spelling-mode" class="quiz-mode active">
+    <div id="spelling-container">
+        <div class="welcome-section">
+            <h2>🔤 Practice Spelling</h2>
+            <p>Listen to the word and type what you hear. The AI will speak each word clearly.</p>
+            
+            <div style="margin: 20px 0;">
+                <label style="display: block; margin-bottom: 10px; font-weight: bold;">Difficulty Level:</label>
+                <select id="spelling-difficulty" style="padding: 10px; font-size: 1rem; border: 2px solid #0d3b66; border-radius: 5px; width: 200px;">
+                    <option value="easy">Easy (3-5 letters)</option>
+                    <option value="medium" selected>Medium (6-8 letters)</option>
+                    <option value="hard">Hard (9+ letters)</option>
+                </select>
+            </div>
+            
+            <button class="practice-btn" onclick="startSpellingPractice()">Start Practice Spelling</button>
+        </div>
+        
+        <div id="spelling-game" style="display: none;">
+            <div class="quiz-question-card">
+                <div class="quiz-score" id="spelling-score">Score: 0 / 0</div>
+                <h3 id="spelling-progress">Word 1 of 10</h3>
+                
+                <div style="text-align: center; margin: 30px 0;">
+                    <div style="display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin-bottom: 15px;">
+                        <button class="practice-btn" onclick="speakCurrentSpellingWord()" style="font-size: 0.9rem; padding: 10px 15px;">
+                            🔊 Play Word
+                        </button>
+                        <button class="practice-btn" onclick="speakWordInSentence()" style="font-size: 0.9rem; padding: 10px 15px;">
+                            💬 Use in Sentence
+                        </button>
+                        <button class="practice-btn" onclick="showSpellingWordDetails()" style="font-size: 0.9rem; padding: 10px 15px;">
+                            📖 Word Details
+                        </button>
+                        <button class="practice-btn" id="add-spelling-favorite-btn" onclick="addCurrentSpellingToFavorites()" style="font-size: 0.9rem; padding: 10px 15px; display: none;">
+                            ⭐ Add to Favorites
+                        </button>
+                    </div>
+                    <p style="margin-top: 5px; color: #666; font-style: italic; font-size: 0.9rem;">Listen to the word alone, in a sentence, see details, or add to favorites</p>
+                </div>
                                 
                                 <div class="form-group" style="margin: 30px 0;">
                                     <label style="font-size: 1.2rem;">Type what you hear:</label>
