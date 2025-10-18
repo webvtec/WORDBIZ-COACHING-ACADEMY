@@ -880,83 +880,132 @@
         }
 
 
-        /* ===== DASHBOARD STYLES ===== */
+       /* ===== DASHBOARD STYLES ===== */
 .dashboard-container {
     max-width: 1000px;
     margin: 0 auto;
+    padding: 20px;
 }
 
-.dashboard-header {
-    background: linear-gradient(135deg, #0d3b66 0%, #0a2f4d 100%);
-    color: white;
-    padding: 40px 30px;
-    border-radius: 15px;
-    margin-bottom: 30px;
-    text-align: center;
-    box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+.dashboard-welcome-card {
+    background: linear-gradient(135deg, #0d3b66 0%, #1a5490 100%);
+    border-radius: 20px;
+    padding: 30px;
+    margin-bottom: 25px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.15);
 }
 
-.dashboard-header h1 {
+.dashboard-profile-section {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.profile-avatar-large {
+    width: 80px;
+    height: 80px;
+    min-width: 80px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #ffd700, #ffed4e);
+    color: #0d3b66;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     font-size: 2.5rem;
-    margin-bottom: 10px;
+    font-weight: bold;
+    box-shadow: 0 4px 15px rgba(255,215,0,0.4);
+    border: 4px solid rgba(255,255,255,0.3);
 }
 
-.dashboard-header p {
-    font-size: 1.2rem;
-    opacity: 0.9;
+.profile-info h1 {
+    color: white;
+    font-size: 1.8rem;
+    margin: 0 0 5px 0;
+}
+
+.profile-info p {
+    color: rgba(255,255,255,0.9);
+    margin: 3px 0;
+    font-size: 1rem;
+}
+
+.dashboard-section {
+    margin-bottom: 30px;
+}
+
+.section-title {
+    color: #0d3b66;
+    font-size: 1.5rem;
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 3px solid #0d3b66;
+    display: inline-block;
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.profile-actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.profile-action-btn {
+    padding: 10px 20px;
+    background: #0d3b66;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s;
+    font-size: 0.9rem;
+}
+
+.profile-action-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(13,59,102,0.3);
+}
+
+.profile-action-btn-save {
+    background: #28a745;
+}
+
+.profile-action-btn-save:hover {
+    background: #218838;
+}
+
+.profile-action-btn-cancel {
+    background: #6c757d;
+}
+
+.profile-action-btn-cancel:hover {
+    background: #5a6268;
 }
 
 .dashboard-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
     gap: 20px;
-    margin-bottom: 30px;
+    margin-bottom: 20px;
 }
 
 .dashboard-card {
     background: white;
     border-radius: 15px;
     padding: 25px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-    transition: all 0.3s;
-}
-
-.dashboard-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 5px 20px rgba(0,0,0,0.15);
-}
-
-.dashboard-card h3 {
-    color: #0d3b66;
-    font-size: 1.5rem;
-    margin-bottom: 15px;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
-.dashboard-card-icon {
-    font-size: 2rem;
-}
-
-    .dashboard-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 5px 20px rgba(0,0,0,0.15);
-    border: 2px solid #0d3b66; /* Add border on hover */
-}
-
-.dashboard-card:active {
-    transform: translateY(-2px);
-}
-
-.dashboard-card {
-    background: white;
-    border-radius: 15px;
-    padding: 25px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    box-shadow: 0 2px 10px rgba(0,0,0,0.08);
     transition: all 0.3s;
     position: relative;
     overflow: hidden;
+    text-align: center;
 }
 
 .dashboard-card::before {
@@ -975,104 +1024,259 @@
     transform: scaleX(1);
 }
 
+.dashboard-card-clickable {
+    cursor: pointer;
+}
+
+.dashboard-card-clickable:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+}
+
+.card-icon {
+    font-size: 2.5rem;
+    margin-bottom: 10px;
+}
+
 .stat-number {
-    font-size: 3rem;
+    font-size: 2.5rem;
     font-weight: bold;
     color: #0d3b66;
     margin: 10px 0;
 }
 
-.profile-section {
+.card-label {
+    color: #666;
+    font-size: 1rem;
+    margin-bottom: 10px;
+    font-weight: 500;
+}
+
+.card-action {
+    color: #0d3b66;
+    font-size: 0.9rem;
+    font-weight: bold;
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+
+.dashboard-card-clickable:hover .card-action {
+    opacity: 1;
+}
+
+.profile-card {
     background: white;
     border-radius: 15px;
-    padding: 30px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    padding: 25px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.08);
 }
 
-.profile-header {
+.profile-field {
     display: flex;
+    justify-content: space-between;
     align-items: center;
-    gap: 20px;
-    margin-bottom: 30px;
-    padding-bottom: 20px;
-    border-bottom: 2px solid #f0f0f0;
+    padding: 15px 0;
+    border-bottom: 1px solid #f0f0f0;
 }
 
-.profile-avatar-large {
-    width: 100px;
-    height: 100px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, #0d3b66, #ffd700);
-    color: white;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 3rem;
-    font-weight: bold;
-    box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+.profile-field:last-child {
+    border-bottom: none;
 }
 
-.profile-info h2 {
-    color: #0d3b66;
-    font-size: 2rem;
-    margin-bottom: 5px;
-}
-
-.profile-info p {
-    color: #666;
-    font-size: 1.1rem;
-}
-
-.profile-form {
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-}
-
-.profile-row {
-    display: grid;
-    grid-template-columns: 200px 1fr;
-    gap: 20px;
-    align-items: center;
-    padding: 15px;
-    background: #f9f9f9;
-    border-radius: 8px;
-}
-
-.profile-label {
+.field-label {
     font-weight: bold;
     color: #0d3b66;
+    font-size: 1rem;
+    min-width: 150px;
 }
 
-.profile-value {
+.field-value {
+    flex: 1;
+    text-align: right;
     color: #333;
 }
 
-.profile-value input,
-.profile-value select {
+.field-input {
     width: 100%;
-    padding: 10px 15px;
+    padding: 10px;
     border: 2px solid #0d3b66;
-    border-radius: 5px;
+    border-radius: 8px;
     font-size: 1rem;
     font-family: Georgia, serif;
 }
 
-.edit-mode .profile-value {
+.settings-card {
     background: white;
-    padding: 5px;
-    border-radius: 5px;
+    border-radius: 15px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+    overflow: hidden;
 }
 
+.setting-item {
+    display: flex;
+    align-items: center;
+    padding: 20px 25px;
+    cursor: pointer;
+    transition: all 0.3s;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.setting-item:last-child {
+    border-bottom: none;
+}
+
+.setting-item:hover {
+    background: #f8f9fa;
+}
+
+.setting-icon {
+    font-size: 1.8rem;
+    margin-right: 15px;
+    min-width: 40px;
+    text-align: center;
+}
+
+.setting-content {
+    flex: 1;
+}
+
+.setting-title {
+    font-weight: bold;
+    color: #0d3b66;
+    font-size: 1.1rem;
+    margin-bottom: 3px;
+}
+
+.setting-description {
+    color: #666;
+    font-size: 0.9rem;
+}
+
+.setting-arrow {
+    color: #0d3b66;
+    font-size: 1.5rem;
+    font-weight: bold;
+}
+
+/* Mobile Responsive */
 @media (max-width: 768px) {
-    .profile-row {
-        grid-template-columns: 1fr;
+    .dashboard-container {
+        padding: 15px;
     }
     
-    .profile-header {
+    .dashboard-welcome-card {
+        padding: 20px;
+    }
+    
+    .dashboard-profile-section {
         flex-direction: column;
         text-align: center;
     }
+    
+    .profile-avatar-large {
+        width: 70px;
+        height: 70px;
+        font-size: 2rem;
+    }
+    
+    .profile-info h1 {
+        font-size: 1.5rem;
+    }
+    
+    .dashboard-grid {
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 15px;
+    }
+    
+    .card-icon {
+        font-size: 2rem;
+    }
+    
+    .stat-number {
+        font-size: 2rem;
+    }
+    
+    .section-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .profile-actions {
+        width: 100%;
+    }
+    
+    .profile-action-btn {
+        flex: 1;
+        min-width: 100px;
+    }
+    
+    .profile-field {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+    
+    .field-label {
+        min-width: auto;
+    }
+    
+    .field-value {
+        text-align: left;
+        width: 100%;
+    }
+    
+    .setting-item {
+        padding: 15px;
+    }
+    
+    .setting-icon {
+        font-size: 1.5rem;
+        margin-right: 12px;
+    }
+}
+
+@media (max-width: 480px) {
+    .profile-info h1 {
+        font-size: 1.3rem;
+    }
+    
+    .profile-info p {
+        font-size: 0.9rem;
+    }
+    
+    .dashboard-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .section-title {
+        font-size: 1.3rem;
+    }
+}
+
+
+        .my-profile-btn {
+    margin-top: 12px;
+    padding: 10px 20px;
+    background: linear-gradient(135deg, #ffd700, #ffed4e);
+    color: #0d3b66;
+    border: none;
+    border-radius: 25px;
+    font-weight: bold;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.3s;
+    box-shadow: 0 2px 8px rgba(255, 215, 0, 0.3);
+    letter-spacing: 0.5px;
+}
+
+.my-profile-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(255, 215, 0, 0.5);
+    background: linear-gradient(135deg, #ffed4e, #ffd700);
+}
+
+.my-profile-btn:active {
+    transform: translateY(0);
 }
     </style>
 </head>
@@ -1083,16 +1287,17 @@
      <!-- Sidebar -->
 <div class="sidebar" id="sidebar">
     <div class="sidebar-header" id="sidebarHeader">
-        <div class="sidebar-user-info" id="sidebarUserInfo" onclick="goToUserDashboard()" style="cursor: pointer;">
-            <div class="user-avatar" id="sidebarUserAvatar">?</div>
+        <div class="sidebar-user-info" id="sidebarUserInfo">
+            <div class="user-avatar" id="sidebarUserAvatar" style="background-image: none; background-size: cover; background-position: center;">?</div>
             <span id="sidebarUserName">Guest</span>
+            <button class="my-profile-btn" id="myProfileBtn" onclick="goToUserDashboard()" style="display: none;">
+                👤 MY PROFILE
+            </button>
         </div>
     </div>
     <div class="sidebar-item" onclick="navigateTo('home')">🏠 Home</div>
-    <div class="sidebar-item" onclick="navigateTo('student-dashboard')">📊 My Dashboard</div>
     <div class="sidebar-item" onclick="navigateTo('word-database')">📚 Word Database</div>
     <div class="sidebar-item" onclick="navigateTo('about')">ℹ️ About Us</div>
-    <div class="sidebar-item" onclick="navigateTo('settings')">⚙️ Settings</div>
     <div class="sidebar-item sign-in" id="sidebar-signin" onclick="showAuthModal()">SIGN IN</div>
     <div class="sidebar-item" id="sidebar-signout" style="display:none;" onclick="signOut()">🚪 Sign Out</div>
 </div>
@@ -1533,92 +1738,101 @@
 </div>
 
 
-    <!-- Student Dashboard Section -->
+   <!-- Student Dashboard Section -->
 <div id="student-dashboard-section" class="content-section">
     <div class="dashboard-container">
-        <div class="dashboard-header">
-            <h1>👋 Welcome Back, <span id="dashboard-student-name">Student</span>!</h1>
-            <p id="dashboard-join-date">Member since: Loading...</p>
+        <!-- Welcome Header -->
+        <div class="dashboard-welcome-card">
+            <div class="dashboard-profile-section">
+                <div class="profile-avatar-large" id="dashboard-avatar" style="background-image: none; background-size: cover; background-position: center;">S</div>
+                <div class="profile-info">
+                    <h1 id="dashboard-name">Student Name</h1>
+                    <p id="dashboard-email">student@email.com</p>
+                    <p id="dashboard-join-date" style="font-size: 0.9rem; opacity: 0.8; margin-top: 5px;">Member since: Loading...</p>
+                </div>
+            </div>
         </div>
 
-        <div class="dashboard-grid">
-    <div class="dashboard-card" onclick="navigateTo('favorites')" style="cursor: pointer; transition: all 0.3s;">
-        <h3><span class="dashboard-card-icon">📚</span> Quiz Stats</h3>
-        <div class="stat-number" id="stat-quiz-favorites">0</div>
-        <p style="color: #666;">Favorite Words</p>
-        <p style="margin-top: 10px; font-size: 0.9rem; color: #0d3b66; font-style: italic;">Click to view →</p>
-    </div>
-
-    <div class="dashboard-card" onclick="navigateTo('incorrect-quiz')" style="cursor: pointer; transition: all 0.3s;">
-        <h3><span class="dashboard-card-icon">❌</span> Quiz Mistakes</h3>
-        <div class="stat-number" id="stat-quiz-incorrect">0</div>
-        <p style="color: #666;">Words to Review</p>
-        <p style="margin-top: 10px; font-size: 0.9rem; color: #0d3b66; font-style: italic;">Click to view →</p>
-    </div>
-
-    <div class="dashboard-card" onclick="navigateTo('spelling-favorites')" style="cursor: pointer; transition: all 0.3s;">
-        <h3><span class="dashboard-card-icon">⭐</span> Spelling Stats</h3>
-        <div class="stat-number" id="stat-spelling-favorites">0</div>
-        <p style="color: #666;">Spelling Favorites</p>
-        <p style="margin-top: 10px; font-size: 0.9rem; color: #0d3b66; font-style: italic;">Click to view →</p>
-    </div>
-
-    <div class="dashboard-card" onclick="navigateTo('spelling-incorrect')" style="cursor: pointer; transition: all 0.3s;">
-        <h3><span class="dashboard-card-icon">🔤</span> Spelling Mistakes</h3>
-        <div class="stat-number" id="stat-spelling-incorrect">0</div>
-        <p style="color: #666;">Words to Practice</p>
-        <p style="margin-top: 10px; font-size: 0.9rem; color: #0d3b66; font-style: italic;">Click to view →</p>
-    </div>
-</div>
-        <div class="profile-section">
-            <div class="profile-header">
-                <div class="profile-avatar-large" id="dashboard-avatar">S</div>
-                <div class="profile-info">
-                    <h2 id="dashboard-name">Student Name</h2>
-                    <p id="dashboard-email">student@email.com</p>
+        <!-- Quick Stats Grid -->
+        <div class="dashboard-section">
+            <h2 class="section-title">📊 Quick Stats</h2>
+            <div class="dashboard-grid">
+                <div class="dashboard-card dashboard-card-clickable" onclick="navigateTo('favorites')">
+                    <div class="card-icon">📚</div>
+                    <div class="stat-number" id="stat-quiz-favorites">0</div>
+                    <div class="card-label">Quiz Favorites</div>
+                    <div class="card-action">View all →</div>
                 </div>
-                <div style="margin-left: auto;">
-                    <button class="practice-btn" id="edit-profile-btn" onclick="toggleEditMode()">
-                        ✏️ Edit Profile
+
+                <div class="dashboard-card dashboard-card-clickable" onclick="navigateTo('incorrect-quiz')">
+                    <div class="card-icon">❌</div>
+                    <div class="stat-number" id="stat-quiz-incorrect">0</div>
+                    <div class="card-label">Quiz Mistakes</div>
+                    <div class="card-action">Practice →</div>
+                </div>
+
+                <div class="dashboard-card dashboard-card-clickable" onclick="navigateTo('spelling-favorites')">
+                    <div class="card-icon">⭐</div>
+                    <div class="stat-number" id="stat-spelling-favorites">0</div>
+                    <div class="card-label">Spelling Favorites</div>
+                    <div class="card-action">View all →</div>
+                </div>
+
+                <div class="dashboard-card dashboard-card-clickable" onclick="navigateTo('spelling-incorrect')">
+                    <div class="card-icon">🔤</div>
+                    <div class="stat-number" id="stat-spelling-incorrect">0</div>
+                    <div class="card-label">Spelling Mistakes</div>
+                    <div class="card-action">Practice →</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Profile Information -->
+        <div class="dashboard-section">
+            <div class="section-header">
+                <h2 class="section-title">👤 Profile Information</h2>
+                <div class="profile-actions">
+                    <button class="profile-action-btn" id="edit-profile-btn" onclick="toggleEditMode()">
+                        ✏️ Edit
                     </button>
-                    <button class="practice-btn" id="save-profile-btn" onclick="saveProfile()" style="display: none; background: #28a745;">
-                        ✅ Save Changes
+                    <button class="profile-action-btn profile-action-btn-save" id="save-profile-btn" onclick="saveProfile()" style="display: none;">
+                        ✅ Save
                     </button>
-                    <button class="practice-btn" id="cancel-edit-btn" onclick="cancelEditMode()" style="display: none; background: #666;">
-                        ❌ Cancel
+                    <button class="profile-action-btn profile-action-btn-cancel" id="cancel-edit-btn" onclick="cancelEditMode()" style="display: none;">
+                        ✖️ Cancel
                     </button>
                 </div>
             </div>
 
-            <div class="profile-form" id="profile-form">
-                <div class="profile-row">
-                    <div class="profile-label">Full Name:</div>
-                    <div class="profile-value">
+            <div class="profile-card">
+                <div class="profile-field">
+                    <div class="field-label">📛 Full Name</div>
+                    <div class="field-value">
                         <span id="display-name">Loading...</span>
-                        <input type="text" id="edit-name" style="display: none;">
+                        <input type="text" id="edit-name" class="field-input" style="display: none;">
                     </div>
                 </div>
 
-                <div class="profile-row">
-                    <div class="profile-label">Email:</div>
-                    <div class="profile-value">
+                <div class="profile-field">
+                    <div class="field-label">📧 Email</div>
+                    <div class="field-value">
                         <span id="display-email">Loading...</span>
                     </div>
                 </div>
 
-                <div class="profile-row">
-                    <div class="profile-label">Age:</div>
-                    <div class="profile-value">
+                <div class="profile-field">
+                    <div class="field-label">🎂 Age</div>
+                    <div class="field-value">
                         <span id="display-age">Loading...</span>
-                        <input type="number" id="edit-age" min="5" max="100" style="display: none;">
+                        <input type="number" id="edit-age" class="field-input" min="5" max="100" style="display: none;">
                     </div>
                 </div>
 
-                <div class="profile-row">
-                    <div class="profile-label">Country:</div>
-                    <div class="profile-value">
+                <div class="profile-field">
+                    <div class="field-label">🌍 Country</div>
+                    <div class="field-value">
                         <span id="display-country">Loading...</span>
-                        <select id="edit-country" style="display: none;">
+                        <select id="edit-country" class="field-input" style="display: none;">
                             <option value="">Select your country</option>
                             <option value="United States">United States</option>
                             <option value="United Kingdom">United Kingdom</option>
@@ -1645,18 +1859,42 @@
                     </div>
                 </div>
 
-                <div class="profile-row">
-                    <div class="profile-label">Account Type:</div>
-                    <div class="profile-value">
+                <div class="profile-field">
+                    <div class="field-label">👥 Account Type</div>
+                    <div class="field-value">
                         <span id="display-usertype">Student</span>
                     </div>
                 </div>
 
-                <div class="profile-row">
-                    <div class="profile-label">Member Since:</div>
-                    <div class="profile-value">
+                <div class="profile-field">
+                    <div class="field-label">📅 Member Since</div>
+                    <div class="field-value">
                         <span id="display-joined">Loading...</span>
                     </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Settings Section -->
+        <div class="dashboard-section">
+            <h2 class="section-title">⚙️ Settings</h2>
+            <div class="settings-card">
+                <div class="setting-item" onclick="showChangePasswordModal()">
+                    <div class="setting-icon">🔒</div>
+                    <div class="setting-content">
+                        <div class="setting-title">Change Password</div>
+                        <div class="setting-description">Update your account password</div>
+                    </div>
+                    <div class="setting-arrow">→</div>
+                </div>
+
+                <div class="setting-item" onclick="confirmDeleteAccount()">
+                    <div class="setting-icon">🗑️</div>
+                    <div class="setting-content">
+                        <div class="setting-title" style="color: #dc3545;">Delete Account</div>
+                        <div class="setting-description">Permanently delete your account and data</div>
+                    </div>
+                    <div class="setting-arrow">→</div>
                 </div>
             </div>
         </div>
@@ -2567,17 +2805,36 @@ async function signUpWithGoogle(userType) {
 }
 
         function updateUIForAuthenticatedUser(user) {
-            const displayName = user.displayName || user.email.split('@')[0];
-            document.getElementById('sidebarUserName').textContent = displayName;
-            document.getElementById('sidebarUserAvatar').textContent = displayName.charAt(0).toUpperCase();
-            
-            document.getElementById('sidebar-signin').style.display = 'none';
-            document.getElementById('sidebar-signout').style.display = 'block';
-        }
+    const displayName = user.displayName || user.email.split('@')[0];
+    const photoURL = user.photoURL;
+    
+    // Update sidebar
+    document.getElementById('sidebarUserName').textContent = displayName;
+    const sidebarAvatar = document.getElementById('sidebarUserAvatar');
+    
+    if (photoURL) {
+        sidebarAvatar.style.backgroundImage = `url(${photoURL})`;
+        sidebarAvatar.textContent = '';
+    } else {
+        sidebarAvatar.style.backgroundImage = 'none';
+        sidebarAvatar.textContent = displayName.charAt(0).toUpperCase();
+    }
+    
+    // Show My Profile button
+    document.getElementById('myProfileBtn').style.display = 'block';
+    
+    document.getElementById('sidebar-signin').style.display = 'none';
+    document.getElementById('sidebar-signout').style.display = 'block';
+}
         
        function updateUIForGuestUser() {
     document.getElementById('sidebarUserName').textContent = 'Guest';
-    document.getElementById('sidebarUserAvatar').textContent = '?';
+    const sidebarAvatar = document.getElementById('sidebarUserAvatar');
+    sidebarAvatar.style.backgroundImage = 'none';
+    sidebarAvatar.textContent = '?';
+    
+    // Hide My Profile button
+    document.getElementById('myProfileBtn').style.display = 'none';
     
     document.getElementById('sidebar-signin').style.display = 'block';
     document.getElementById('sidebar-signout').style.display = 'none';
@@ -3929,7 +4186,6 @@ async function loadUserDashboard() {
     if (!currentUser) return;
     
     try {
-        // Get user document
         const userDoc = await db.collection('users').doc(currentUser.uid).get();
         const userData = userDoc.data();
         
@@ -3937,7 +4193,16 @@ async function loadUserDashboard() {
         document.getElementById('dashboard-student-name').textContent = userData.name || 'Student';
         document.getElementById('dashboard-name').textContent = userData.name || 'Student';
         document.getElementById('dashboard-email').textContent = userData.email || '';
-        document.getElementById('dashboard-avatar').textContent = (userData.name || 'S').charAt(0).toUpperCase();
+        
+        // Update avatar with Google photo or initials
+        const dashboardAvatar = document.getElementById('dashboard-avatar');
+        if (currentUser.photoURL) {
+            dashboardAvatar.style.backgroundImage = `url(${currentUser.photoURL})`;
+            dashboardAvatar.textContent = '';
+        } else {
+            dashboardAvatar.style.backgroundImage = 'none';
+            dashboardAvatar.textContent = (userData.name || 'S').charAt(0).toUpperCase();
+        }
         
         // Format join date
         if (userData.createdAt) {
@@ -3973,7 +4238,6 @@ async function loadUserDashboard() {
         console.error('Error loading dashboard:', error);
     }
 }
-
 function toggleEditMode() {
     // Hide display elements, show edit inputs
     document.getElementById('display-name').style.display = 'none';
@@ -4053,6 +4317,45 @@ async function saveProfile() {
     } catch (error) {
         console.error('Error updating profile:', error);
         alert('Failed to update profile: ' + error.message);
+    }
+}
+
+
+        function showChangePasswordModal() {
+    alert('Change password feature coming soon! For now, you can reset your password using the "Forgot Password" link on the sign-in page.');
+}
+
+function confirmDeleteAccount() {
+    if (confirm('⚠️ WARNING: This will permanently delete your account and all your data. This action cannot be undone.\n\nAre you absolutely sure?')) {
+        if (confirm('Final confirmation: Delete your account forever?')) {
+            deleteUserAccount();
+        }
+    }
+}
+
+async function deleteUserAccount() {
+    if (!currentUser) return;
+    
+    try {
+        // Delete user data from Firestore
+        await db.collection('users').doc(currentUser.uid).delete();
+        
+        // Delete user subcollections
+        const collections = ['favorites', 'incorrectQuestions', 'spellingFavorites', 'spellingIncorrect'];
+        for (const collection of collections) {
+            const snapshot = await db.collection('users').doc(currentUser.uid).collection(collection).get();
+            const deletePromises = snapshot.docs.map(doc => doc.ref.delete());
+            await Promise.all(deletePromises);
+        }
+        
+        // Delete Firebase Auth account
+        await currentUser.delete();
+        
+        alert('Your account has been successfully deleted.');
+        navigateTo('home');
+    } catch (error) {
+        console.error('Error deleting account:', error);
+        alert('Failed to delete account: ' + error.message);
     }
 }
     </script>
