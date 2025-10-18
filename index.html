@@ -876,7 +876,166 @@
                 font-size: 0.9rem;
             }
         }
-        
+
+
+        /* ===== DASHBOARD STYLES ===== */
+.dashboard-container {
+    max-width: 1000px;
+    margin: 0 auto;
+}
+
+.dashboard-header {
+    background: linear-gradient(135deg, #0d3b66 0%, #0a2f4d 100%);
+    color: white;
+    padding: 40px 30px;
+    border-radius: 15px;
+    margin-bottom: 30px;
+    text-align: center;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+}
+
+.dashboard-header h1 {
+    font-size: 2.5rem;
+    margin-bottom: 10px;
+}
+
+.dashboard-header p {
+    font-size: 1.2rem;
+    opacity: 0.9;
+}
+
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px;
+    margin-bottom: 30px;
+}
+
+.dashboard-card {
+    background: white;
+    border-radius: 15px;
+    padding: 25px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    transition: all 0.3s;
+}
+
+.dashboard-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 5px 20px rgba(0,0,0,0.15);
+}
+
+.dashboard-card h3 {
+    color: #0d3b66;
+    font-size: 1.5rem;
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.dashboard-card-icon {
+    font-size: 2rem;
+}
+
+.stat-number {
+    font-size: 3rem;
+    font-weight: bold;
+    color: #0d3b66;
+    margin: 10px 0;
+}
+
+.profile-section {
+    background: white;
+    border-radius: 15px;
+    padding: 30px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.profile-header {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    margin-bottom: 30px;
+    padding-bottom: 20px;
+    border-bottom: 2px solid #f0f0f0;
+}
+
+.profile-avatar-large {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #0d3b66, #ffd700);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 3rem;
+    font-weight: bold;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+}
+
+.profile-info h2 {
+    color: #0d3b66;
+    font-size: 2rem;
+    margin-bottom: 5px;
+}
+
+.profile-info p {
+    color: #666;
+    font-size: 1.1rem;
+}
+
+.profile-form {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.profile-row {
+    display: grid;
+    grid-template-columns: 200px 1fr;
+    gap: 20px;
+    align-items: center;
+    padding: 15px;
+    background: #f9f9f9;
+    border-radius: 8px;
+}
+
+.profile-label {
+    font-weight: bold;
+    color: #0d3b66;
+}
+
+.profile-value {
+    color: #333;
+}
+
+.profile-value input,
+.profile-value select {
+    width: 100%;
+    padding: 10px 15px;
+    border: 2px solid #0d3b66;
+    border-radius: 5px;
+    font-size: 1rem;
+    font-family: Georgia, serif;
+}
+
+.edit-mode .profile-value {
+    background: white;
+    padding: 5px;
+    border-radius: 5px;
+}
+
+@media (max-width: 768px) {
+    .profile-row {
+        grid-template-columns: 1fr;
+    }
+    
+    .profile-header {
+        flex-direction: column;
+        text-align: center;
+    }
+}
     </style>
 </head>
 <body>
@@ -884,13 +1043,12 @@
     <div class="overlay" id="overlay" onclick="toggleSidebar()"></div>
     
      <!-- Sidebar -->
-<div class="sidebar" id="sidebar">
-    <div class="sidebar-header" id="sidebarHeader">
-        <div class="sidebar-user-info" id="sidebarUserInfo">
-            <div class="user-avatar" id="sidebarUserAvatar">?</div>
-            <span id="sidebarUserName">Guest</span>
-        </div>
+<div class="sidebar-header" id="sidebarHeader">
+    <div class="sidebar-user-info" id="sidebarUserInfo" onclick="goToUserDashboard()" style="cursor: pointer;">
+        <div class="user-avatar" id="sidebarUserAvatar">?</div>
+        <span id="sidebarUserName">Guest</span>
     </div>
+</div>
     <div class="sidebar-item" onclick="navigateTo('home')">Home</div>
     <div class="sidebar-item" onclick="navigateTo('student-dashboard')">Student Dashboard</div>
     <div class="sidebar-item" onclick="navigateTo('coach-dashboard')">Coach Dashboard</div>
@@ -1087,36 +1245,62 @@
             </div>
 
             <!-- Sign Up Form - Student -->
-            <form id="signup-student-form" class="auth-form" onsubmit="handleSignUp(event, 'student')" style="display: none;">
-                <button type="button" onclick="backToUserTypeSelection()" style="background: none; border: none; color: #0d3b66; cursor: pointer; margin-bottom: 15px; display: flex; align-items: center; gap: 5px;">
-                    ← Back to selection
-                </button>
-                
-                <h3 style="color: #0d3b66; margin-bottom: 15px; text-align: center;">🎓 Student Sign Up</h3>
-                
-                <div class="form-group">
-                    <label>Full Name</label>
-                    <input type="text" id="signup-student-name" required>
-                </div>
-                <div class="form-group">
-                    <label>Email</label>
-                    <input type="email" id="signup-student-email" required>
-                </div>
-                <div class="form-group">
-                    <label>Password (min 6 characters)</label>
-                    <input type="password" id="signup-student-password" required minlength="6">
-                </div>
-                <div class="form-group">
-                    <label>Age</label>
-                    <input type="number" id="signup-student-age" min="5" max="100" required>
-                </div>
-                <button type="submit" class="auth-submit">Create Student Account</button>
-                <button type="button" class="auth-submit" onclick="signUpWithGoogle('student')" style="background: #db4437; margin-top: 10px;">
-                    Sign Up with Google
-                </button>
-                <div id="signup-student-error" class="feedback error" style="display:none; margin-top:15px;"></div>
-            </form>
-
+<form id="signup-student-form" class="auth-form" onsubmit="handleSignUp(event, 'student')" style="display: none;">
+    <button type="button" onclick="backToUserTypeSelection()" style="background: none; border: none; color: #0d3b66; cursor: pointer; margin-bottom: 15px; display: flex; align-items: center; gap: 5px;">
+        ← Back to selection
+    </button>
+    
+    <h3 style="color: #0d3b66; margin-bottom: 15px; text-align: center;">🎓 Student Sign Up</h3>
+    
+    <div class="form-group">
+        <label>Full Name</label>
+        <input type="text" id="signup-student-name" required>
+    </div>
+    <div class="form-group">
+        <label>Email</label>
+        <input type="email" id="signup-student-email" required>
+    </div>
+    <div class="form-group">
+        <label>Password (min 6 characters)</label>
+        <input type="password" id="signup-student-password" required minlength="6">
+    </div>
+    <div class="form-group">
+        <label>Age</label>
+        <input type="number" id="signup-student-age" min="5" max="100" required>
+    </div>
+    <div class="form-group">
+        <label>Country</label>
+        <select id="signup-student-country" required style="width: 100%; padding: 12px 15px; border: 2px solid #0d3b66; border-radius: 5px; font-size: 1rem; font-family: Georgia, serif;">
+            <option value="">Select your country</option>
+            <option value="United States">United States</option>
+            <option value="United Kingdom">United Kingdom</option>
+            <option value="Canada">Canada</option>
+            <option value="Australia">Australia</option>
+            <option value="Jamaica">Jamaica</option>
+            <option value="India">India</option>
+            <option value="Nigeria">Nigeria</option>
+            <option value="South Africa">South Africa</option>
+            <option value="Kenya">Kenya</option>
+            <option value="Ghana">Ghana</option>
+            <option value="Trinidad and Tobago">Trinidad and Tobago</option>
+            <option value="Barbados">Barbados</option>
+            <option value="Bahamas">Bahamas</option>
+            <option value="Philippines">Philippines</option>
+            <option value="Singapore">Singapore</option>
+            <option value="New Zealand">New Zealand</option>
+            <option value="Ireland">Ireland</option>
+            <option value="Pakistan">Pakistan</option>
+            <option value="Bangladesh">Bangladesh</option>
+            <option value="Malaysia">Malaysia</option>
+            <option value="Other">Other</option>
+        </select>
+    </div>
+    <button type="submit" class="auth-submit">Create Student Account</button>
+    <button type="button" class="auth-submit" onclick="signUpWithGoogle('student')" style="background: #db4437; margin-top: 10px;">
+        Sign Up with Google
+    </button>
+    <div id="signup-student-error" class="feedback error" style="display:none; margin-top:15px;"></div>
+</form>
             <!-- Sign Up Form - Coach -->
             <form id="signup-coach-form" class="auth-form" onsubmit="handleSignUp(event, 'coach')" style="display: none;">
                 <button type="button" onclick="backToUserTypeSelection()" style="background: none; border: none; color: #0d3b66; cursor: pointer; margin-bottom: 15px; display: flex; align-items: center; gap: 5px;">
@@ -1309,6 +1493,134 @@
         </div>
         <div id="spelling-incorrect-container" class="loading">
             Please sign in to track spelling mistakes
+        </div>
+    </div>
+</div>
+
+
+    <!-- Student Dashboard Section -->
+<div id="student-dashboard-section" class="content-section">
+    <div class="dashboard-container">
+        <div class="dashboard-header">
+            <h1>👋 Welcome Back, <span id="dashboard-student-name">Student</span>!</h1>
+            <p id="dashboard-join-date">Member since: Loading...</p>
+        </div>
+
+        <div class="dashboard-grid">
+            <div class="dashboard-card">
+                <h3><span class="dashboard-card-icon">📚</span> Quiz Stats</h3>
+                <div class="stat-number" id="stat-quiz-favorites">0</div>
+                <p style="color: #666;">Favorite Words</p>
+            </div>
+
+            <div class="dashboard-card">
+                <h3><span class="dashboard-card-icon">❌</span> Quiz Mistakes</h3>
+                <div class="stat-number" id="stat-quiz-incorrect">0</div>
+                <p style="color: #666;">Words to Review</p>
+            </div>
+
+            <div class="dashboard-card">
+                <h3><span class="dashboard-card-icon">⭐</span> Spelling Stats</h3>
+                <div class="stat-number" id="stat-spelling-favorites">0</div>
+                <p style="color: #666;">Spelling Favorites</p>
+            </div>
+
+            <div class="dashboard-card">
+                <h3><span class="dashboard-card-icon">🔤</span> Spelling Mistakes</h3>
+                <div class="stat-number" id="stat-spelling-incorrect">0</div>
+                <p style="color: #666;">Words to Practice</p>
+            </div>
+        </div>
+
+        <div class="profile-section">
+            <div class="profile-header">
+                <div class="profile-avatar-large" id="dashboard-avatar">S</div>
+                <div class="profile-info">
+                    <h2 id="dashboard-name">Student Name</h2>
+                    <p id="dashboard-email">student@email.com</p>
+                </div>
+                <div style="margin-left: auto;">
+                    <button class="practice-btn" id="edit-profile-btn" onclick="toggleEditMode()">
+                        ✏️ Edit Profile
+                    </button>
+                    <button class="practice-btn" id="save-profile-btn" onclick="saveProfile()" style="display: none; background: #28a745;">
+                        ✅ Save Changes
+                    </button>
+                    <button class="practice-btn" id="cancel-edit-btn" onclick="cancelEditMode()" style="display: none; background: #666;">
+                        ❌ Cancel
+                    </button>
+                </div>
+            </div>
+
+            <div class="profile-form" id="profile-form">
+                <div class="profile-row">
+                    <div class="profile-label">Full Name:</div>
+                    <div class="profile-value">
+                        <span id="display-name">Loading...</span>
+                        <input type="text" id="edit-name" style="display: none;">
+                    </div>
+                </div>
+
+                <div class="profile-row">
+                    <div class="profile-label">Email:</div>
+                    <div class="profile-value">
+                        <span id="display-email">Loading...</span>
+                    </div>
+                </div>
+
+                <div class="profile-row">
+                    <div class="profile-label">Age:</div>
+                    <div class="profile-value">
+                        <span id="display-age">Loading...</span>
+                        <input type="number" id="edit-age" min="5" max="100" style="display: none;">
+                    </div>
+                </div>
+
+                <div class="profile-row">
+                    <div class="profile-label">Country:</div>
+                    <div class="profile-value">
+                        <span id="display-country">Loading...</span>
+                        <select id="edit-country" style="display: none;">
+                            <option value="">Select your country</option>
+                            <option value="United States">United States</option>
+                            <option value="United Kingdom">United Kingdom</option>
+                            <option value="Canada">Canada</option>
+                            <option value="Australia">Australia</option>
+                            <option value="Jamaica">Jamaica</option>
+                            <option value="India">India</option>
+                            <option value="Nigeria">Nigeria</option>
+                            <option value="South Africa">South Africa</option>
+                            <option value="Kenya">Kenya</option>
+                            <option value="Ghana">Ghana</option>
+                            <option value="Trinidad and Tobago">Trinidad and Tobago</option>
+                            <option value="Barbados">Barbados</option>
+                            <option value="Bahamas">Bahamas</option>
+                            <option value="Philippines">Philippines</option>
+                            <option value="Singapore">Singapore</option>
+                            <option value="New Zealand">New Zealand</option>
+                            <option value="Ireland">Ireland</option>
+                            <option value="Pakistan">Pakistan</option>
+                            <option value="Bangladesh">Bangladesh</option>
+                            <option value="Malaysia">Malaysia</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="profile-row">
+                    <div class="profile-label">Account Type:</div>
+                    <div class="profile-value">
+                        <span id="display-usertype">Student</span>
+                    </div>
+                </div>
+
+                <div class="profile-row">
+                    <div class="profile-label">Member Since:</div>
+                    <div class="profile-value">
+                        <span id="display-joined">Loading...</span>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </div>
@@ -2100,14 +2412,15 @@ async function handleSignUp(event, userType) {
     
     let name, email, password, errorDiv;
     let additionalData = { userType: userType };
-    
     if (userType === 'student') {
-        name = document.getElementById('signup-student-name').value;
-        email = document.getElementById('signup-student-email').value;
-        password = document.getElementById('signup-student-password').value;
-        errorDiv = document.getElementById('signup-student-error');
-        additionalData.age = document.getElementById('signup-student-age').value;
-    } else if (userType === 'coach') {
+    name = document.getElementById('signup-student-name').value;
+    email = document.getElementById('signup-student-email').value;
+    password = document.getElementById('signup-student-password').value;
+    errorDiv = document.getElementById('signup-student-error');
+    additionalData.age = document.getElementById('signup-student-age').value;
+    additionalData.country = document.getElementById('signup-student-country').value;
+}
+    else if (userType === 'coach') {
         name = document.getElementById('signup-coach-name').value;
         email = document.getElementById('signup-coach-email').value;
         password = document.getElementById('signup-coach-password').value;
@@ -3546,7 +3859,151 @@ async function addCurrentSpellingToFavorites() {
         }, 2000);
     }
 }
+
+
+
+        // ===== DASHBOARD FUNCTIONS =====
+function goToUserDashboard() {
+    if (!currentUser) {
+        showAuthModal();
+        return;
+    }
+    
+    // Load user data and navigate to dashboard
+    loadUserDashboard();
+    navigateTo('student-dashboard');
+}
+
+async function loadUserDashboard() {
+    if (!currentUser) return;
+    
+    try {
+        // Get user document
+        const userDoc = await db.collection('users').doc(currentUser.uid).get();
+        const userData = userDoc.data();
         
+        // Update dashboard header
+        document.getElementById('dashboard-student-name').textContent = userData.name || 'Student';
+        document.getElementById('dashboard-name').textContent = userData.name || 'Student';
+        document.getElementById('dashboard-email').textContent = userData.email || '';
+        document.getElementById('dashboard-avatar').textContent = (userData.name || 'S').charAt(0).toUpperCase();
+        
+        // Format join date
+        if (userData.createdAt) {
+            const joinDate = userData.createdAt.toDate();
+            document.getElementById('dashboard-join-date').textContent = 
+                `Member since: ${joinDate.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}`;
+            document.getElementById('display-joined').textContent = 
+                joinDate.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+        }
+        
+        // Update profile fields
+        document.getElementById('display-name').textContent = userData.name || 'N/A';
+        document.getElementById('edit-name').value = userData.name || '';
+        
+        document.getElementById('display-email').textContent = userData.email || 'N/A';
+        
+        document.getElementById('display-age').textContent = userData.age || 'N/A';
+        document.getElementById('edit-age').value = userData.age || '';
+        
+        document.getElementById('display-country').textContent = userData.country || 'Not specified';
+        document.getElementById('edit-country').value = userData.country || '';
+        
+        document.getElementById('display-usertype').textContent = 
+            userData.userType ? userData.userType.charAt(0).toUpperCase() + userData.userType.slice(1) : 'Student';
+        
+        // Update stats
+        document.getElementById('stat-quiz-favorites').textContent = userFavorites.length;
+        document.getElementById('stat-quiz-incorrect').textContent = userIncorrect.length;
+        document.getElementById('stat-spelling-favorites').textContent = userSpellingFavorites.length;
+        document.getElementById('stat-spelling-incorrect').textContent = userSpellingIncorrect.length;
+        
+    } catch (error) {
+        console.error('Error loading dashboard:', error);
+    }
+}
+
+function toggleEditMode() {
+    // Hide display elements, show edit inputs
+    document.getElementById('display-name').style.display = 'none';
+    document.getElementById('edit-name').style.display = 'block';
+    
+    document.getElementById('display-age').style.display = 'none';
+    document.getElementById('edit-age').style.display = 'block';
+    
+    document.getElementById('display-country').style.display = 'none';
+    document.getElementById('edit-country').style.display = 'block';
+    
+    // Toggle buttons
+    document.getElementById('edit-profile-btn').style.display = 'none';
+    document.getElementById('save-profile-btn').style.display = 'inline-block';
+    document.getElementById('cancel-edit-btn').style.display = 'inline-block';
+    
+    document.getElementById('profile-form').classList.add('edit-mode');
+}
+
+function cancelEditMode() {
+    // Show display elements, hide edit inputs
+    document.getElementById('display-name').style.display = 'inline';
+    document.getElementById('edit-name').style.display = 'none';
+    
+    document.getElementById('display-age').style.display = 'inline';
+    document.getElementById('edit-age').style.display = 'none';
+    
+    document.getElementById('display-country').style.display = 'inline';
+    document.getElementById('edit-country').style.display = 'none';
+    
+    // Toggle buttons
+    document.getElementById('edit-profile-btn').style.display = 'inline-block';
+    document.getElementById('save-profile-btn').style.display = 'none';
+    document.getElementById('cancel-edit-btn').style.display = 'none';
+    
+    document.getElementById('profile-form').classList.remove('edit-mode');
+}
+
+async function saveProfile() {
+    if (!currentUser) return;
+    
+    const newName = document.getElementById('edit-name').value.trim();
+    const newAge = document.getElementById('edit-age').value;
+    const newCountry = document.getElementById('edit-country').value;
+    
+    if (!newName) {
+        alert('Name cannot be empty');
+        return;
+    }
+    
+    try {
+        // Update Firestore
+        await db.collection('users').doc(currentUser.uid).update({
+            name: newName,
+            age: newAge,
+            country: newCountry
+        });
+        
+        // Update Firebase Auth profile
+        await currentUser.updateProfile({ displayName: newName });
+        
+        // Update UI
+        document.getElementById('display-name').textContent = newName;
+        document.getElementById('display-age').textContent = newAge;
+        document.getElementById('display-country').textContent = newCountry;
+        
+        document.getElementById('dashboard-student-name').textContent = newName;
+        document.getElementById('dashboard-name').textContent = newName;
+        document.getElementById('dashboard-avatar').textContent = newName.charAt(0).toUpperCase();
+        
+        // Update sidebar
+        document.getElementById('sidebarUserName').textContent = newName;
+        document.getElementById('sidebarUserAvatar').textContent = newName.charAt(0).toUpperCase();
+        
+        cancelEditMode();
+        alert('Profile updated successfully!');
+    } catch (error) {
+        console.error('Error updating profile:', error);
+        alert('Failed to update profile: ' + error.message);
+    }
+}
     </script>
 </body>
 </html>
