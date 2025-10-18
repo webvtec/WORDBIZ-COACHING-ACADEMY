@@ -1102,18 +1102,21 @@
                             <div class="quiz-question-card">
                                 <div class="quiz-score" id="spelling-score">Score: 0 / 0</div>
                                 <h3 id="spelling-progress">Word 1 of 10</h3>
-                                
                                 <div style="text-align: center; margin: 30px 0;">
-                                    <button class="practice-btn" onclick="speakCurrentSpellingWord()" style="font-size: 1.3rem; padding: 20px 40px;">
-                                        🔊 Play Word
-                                    </button>
-                                    <button class="practice-btn" onclick="speakWordInSentence()" style="font-size: 1.1rem; padding: 15px 30px; background: #28a745; margin-left: 10px;">
-                                    💬 Use in Sentence
-                                     </button>
-                                     <button class="practice-btn" onclick="showSpellingWordDetails()" style="font-size: 1.1rem; padding: 15px 30px; background: #17a2b8; margin-left: 10px;">
-                                     📖 Word Details
-                                     </button>
-                                      <p style="margin-top: 10px; color: #666; font-style: italic;">Listen to the word alone, in a sentence, or see its details</p>
+    <button class="practice-btn" onclick="speakCurrentSpellingWord()" style="font-size: 1.3rem; padding: 20px 40px;">
+        🔊 Play Word
+    </button>
+    <button class="practice-btn" onclick="speakWordInSentence()" style="font-size: 1.1rem; padding: 15px 30px; background: #28a745; margin-left: 10px;">
+    💬 Use in Sentence
+     </button>
+     <button class="practice-btn" onclick="showSpellingWordDetails()" style="font-size: 1.1rem; padding: 15px 30px; background: #17a2b8; margin-left: 10px;">
+     📖 Word Details
+     </button>
+     <button class="practice-btn" id="add-spelling-favorite-btn" onclick="addCurrentSpellingToFavorites()" style="font-size: 1.1rem; padding: 15px 30px; background: #ffd700; color: #0d3b66; margin-left: 10px; display: none;">
+     ⭐ Add to Favorites
+     </button>
+      <p style="margin-top: 10px; color: #666; font-style: italic;">Listen to the word alone, in a sentence, see details, or add to favorites</p>
+                              
                                      </div>
                                 
                                 <div class="form-group" style="margin: 30px 0;">
@@ -2623,22 +2626,27 @@ function displayFavorites() {
         }
 
         function loadSpellingWord() {
-            currentSpellingWord = spellingWords[currentSpellingIndex];
-            
-            document.getElementById('spelling-progress').textContent = 
-                `Word ${currentSpellingIndex + 1} of ${spellingWords.length}`;
-            document.getElementById('spelling-score').textContent = 
-                `Score: ${spellingScore} / ${currentSpellingIndex}`;
-            document.getElementById('spelling-input').value = '';
-            document.getElementById('spelling-feedback').innerHTML = '';
-            
-            // Auto-play the word when loaded
-            setTimeout(() => speakCurrentSpellingWord(), 500);
-            
-            // Focus on input
-            document.getElementById('spelling-input').focus();
-        }
-
+    currentSpellingWord = spellingWords[currentSpellingIndex];
+    
+    document.getElementById('spelling-progress').textContent = 
+        `Word ${currentSpellingIndex + 1} of ${spellingWords.length}`;
+    document.getElementById('spelling-score').textContent = 
+        `Score: ${spellingScore} / ${currentSpellingIndex}`;
+    document.getElementById('spelling-input').value = '';
+    document.getElementById('spelling-feedback').innerHTML = '';
+    
+    // Show favorite button if user is logged in
+    const favoriteBtn = document.getElementById('add-spelling-favorite-btn');
+    if (favoriteBtn && currentUser) {
+        favoriteBtn.style.display = 'inline-block';
+    }
+    
+    // Auto-play the word when loaded
+    setTimeout(() => speakCurrentSpellingWord(), 500);
+    
+    // Focus on input
+    document.getElementById('spelling-input').focus();
+}
        function speakCurrentSpellingWord() {
             if (!currentSpellingWord) return;
             
@@ -3087,9 +3095,16 @@ async function saveSpellingFavorite(word, userAnswer, wasCorrect) {
     try {
         const favoriteRef = db.collection('users').doc(currentUser.uid).collection('spellingFavorites').doc(word);
         
+        // Check if already exists
+        const existingDoc = await favoriteRef.get();
+        if (existingDoc.exists) {
+            console.log('Word already in favorites');
+            return;
+        }
+        
         await favoriteRef.set({
             word: word,
-            userAnswer: userAnswer,
+            userAnswer: userAnswer || '',
             wasCorrect: wasCorrect,
             addedAt: firebase.firestore.FieldValue.serverTimestamp()
         });
@@ -3097,11 +3112,17 @@ async function saveSpellingFavorite(word, userAnswer, wasCorrect) {
         userSpellingFavorites.push({
             id: word,
             word: word,
-            userAnswer: userAnswer,
+            userAnswer: userAnswer || '',
             wasCorrect: wasCorrect
         });
         
         displaySpellingFavorites();
+        
+        // Update button state if quiz button exists
+        const btn = document.getElementById('spellingFavoritesQuizBtn');
+        if (btn) {
+            btn.disabled = userSpellingFavorites.length < 5;
+        }
     } catch (error) {
         console.error('Error saving spelling favorite:', error);
     }
@@ -3287,6 +3308,39 @@ async function startSpellingIncorrectQuiz() {
     
     loadSpellingWord();
 }
+
+async function addCurrentSpellingToFavorites() {
+    if (!currentUser) {
+        alert('Please sign in to save favorites');
+        return;
+    }
+    
+    if (!currentSpellingWord) return;
+    
+    const btn = document.getElementById('add-spelling-favorite-btn');
+    const originalText = btn.textContent;
+    
+    btn.textContent = '⏳ Saving...';
+    btn.disabled = true;
+    
+    try {
+        await saveSpellingFavorite(currentSpellingWord, '', false);
+        btn.textContent = '✅ Added!';
+        
+        setTimeout(() => {
+            btn.textContent = originalText;
+            btn.disabled = false;
+        }, 2000);
+    } catch (error) {
+        console.error('Error saving favorite:', error);
+        btn.textContent = '❌ Failed';
+        setTimeout(() => {
+            btn.textContent = originalText;
+            btn.disabled = false;
+        }, 2000);
+    }
+}
+        
     </script>
 </body>
 </html>
