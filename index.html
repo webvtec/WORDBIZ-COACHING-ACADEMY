@@ -687,31 +687,33 @@
 
         /* ===== AUTH MODAL ===== */
         .auth-modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.7);
-            z-index: 3000;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-        }
-
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.7);
+    z-index: 3000;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    overflow-y: auto; /* Add scrolling */
+}
         .auth-modal.active {
             display: flex;
         }
 
-        .auth-content {
-            background: white;
-            border-radius: 10px;
-            max-width: 450px;
-            width: 100%;
-            overflow: hidden;
-        }
-
+       .auth-content {
+    background: white;
+    border-radius: 10px;
+    max-width: 450px;
+    width: 100%;
+    max-height: 90vh; /* Limit height */
+    overflow-y: auto; /* Make scrollable */
+    position: relative;
+    margin: auto; /* Center it */
+}
         .auth-header {
             background: #0d3b66;
             color: white;
@@ -937,6 +939,42 @@
     font-size: 2rem;
 }
 
+    .dashboard-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 5px 20px rgba(0,0,0,0.15);
+    border: 2px solid #0d3b66; /* Add border on hover */
+}
+
+.dashboard-card:active {
+    transform: translateY(-2px);
+}
+
+.dashboard-card {
+    background: white;
+    border-radius: 15px;
+    padding: 25px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    transition: all 0.3s;
+    position: relative;
+    overflow: hidden;
+}
+
+.dashboard-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 4px;
+    background: linear-gradient(90deg, #0d3b66, #ffd700);
+    transform: scaleX(0);
+    transition: transform 0.3s;
+}
+
+.dashboard-card:hover::before {
+    transform: scaleX(1);
+}
+
 .stat-number {
     font-size: 3rem;
     font-weight: bold;
@@ -1045,24 +1083,19 @@
      <!-- Sidebar -->
 <div class="sidebar" id="sidebar">
     <div class="sidebar-header" id="sidebarHeader">
-    <div class="sidebar-user-info" id="sidebarUserInfo" onclick="goToUserDashboard()" style="cursor: pointer;">
-        <div class="user-avatar" id="sidebarUserAvatar">?</div>
-        <span id="sidebarUserName">Guest</span>
+        <div class="sidebar-user-info" id="sidebarUserInfo" onclick="goToUserDashboard()" style="cursor: pointer;">
+            <div class="user-avatar" id="sidebarUserAvatar">?</div>
+            <span id="sidebarUserName">Guest</span>
+        </div>
     </div>
-</div>
-    <div class="sidebar-item" onclick="navigateTo('home')">Home</div>
-    <div class="sidebar-item" onclick="navigateTo('student-dashboard')">Student Dashboard</div>
-    <div class="sidebar-item" onclick="navigateTo('coach-dashboard')">Coach Dashboard</div>
-    <div class="sidebar-item" onclick="navigateTo('word-database')">Word Database</div>
-    <div class="sidebar-item" onclick="navigateTo('spelling-favorites')">Favorites Spellings</div>
-    <div class="sidebar-item" onclick="navigateTo('spelling-incorrect')">Incorrect Spellings</div>
-    <div class="sidebar-item" onclick="navigateTo('favorites')">Favorite Quizes</div>
-    <div class="sidebar-item" onclick="navigateTo('incorrect-quiz')">Incorrect Quizes</div>
-    <div class="sidebar-item" onclick="navigateTo('about')">About Us</div>
-    <div class="sidebar-item" onclick="navigateTo('settings')">Settings</div>
+    <div class="sidebar-item" onclick="navigateTo('home')">🏠 Home</div>
+    <div class="sidebar-item" onclick="navigateTo('student-dashboard')">📊 My Dashboard</div>
+    <div class="sidebar-item" onclick="navigateTo('word-database')">📚 Word Database</div>
+    <div class="sidebar-item" onclick="navigateTo('about')">ℹ️ About Us</div>
+    <div class="sidebar-item" onclick="navigateTo('settings')">⚙️ Settings</div>
     <div class="sidebar-item sign-in" id="sidebar-signin" onclick="showAuthModal()">SIGN IN</div>
-    <div class="sidebar-item" id="sidebar-signout" style="display:none;" onclick="signOut()">Sign Out</div>
-    </div>
+    <div class="sidebar-item" id="sidebar-signout" style="display:none;" onclick="signOut()">🚪 Sign Out</div>
+</div>
 </div>
 
 
@@ -1509,31 +1542,34 @@
         </div>
 
         <div class="dashboard-grid">
-            <div class="dashboard-card">
-                <h3><span class="dashboard-card-icon">📚</span> Quiz Stats</h3>
-                <div class="stat-number" id="stat-quiz-favorites">0</div>
-                <p style="color: #666;">Favorite Words</p>
-            </div>
+    <div class="dashboard-card" onclick="navigateTo('favorites')" style="cursor: pointer; transition: all 0.3s;">
+        <h3><span class="dashboard-card-icon">📚</span> Quiz Stats</h3>
+        <div class="stat-number" id="stat-quiz-favorites">0</div>
+        <p style="color: #666;">Favorite Words</p>
+        <p style="margin-top: 10px; font-size: 0.9rem; color: #0d3b66; font-style: italic;">Click to view →</p>
+    </div>
 
-            <div class="dashboard-card">
-                <h3><span class="dashboard-card-icon">❌</span> Quiz Mistakes</h3>
-                <div class="stat-number" id="stat-quiz-incorrect">0</div>
-                <p style="color: #666;">Words to Review</p>
-            </div>
+    <div class="dashboard-card" onclick="navigateTo('incorrect-quiz')" style="cursor: pointer; transition: all 0.3s;">
+        <h3><span class="dashboard-card-icon">❌</span> Quiz Mistakes</h3>
+        <div class="stat-number" id="stat-quiz-incorrect">0</div>
+        <p style="color: #666;">Words to Review</p>
+        <p style="margin-top: 10px; font-size: 0.9rem; color: #0d3b66; font-style: italic;">Click to view →</p>
+    </div>
 
-            <div class="dashboard-card">
-                <h3><span class="dashboard-card-icon">⭐</span> Spelling Stats</h3>
-                <div class="stat-number" id="stat-spelling-favorites">0</div>
-                <p style="color: #666;">Spelling Favorites</p>
-            </div>
+    <div class="dashboard-card" onclick="navigateTo('spelling-favorites')" style="cursor: pointer; transition: all 0.3s;">
+        <h3><span class="dashboard-card-icon">⭐</span> Spelling Stats</h3>
+        <div class="stat-number" id="stat-spelling-favorites">0</div>
+        <p style="color: #666;">Spelling Favorites</p>
+        <p style="margin-top: 10px; font-size: 0.9rem; color: #0d3b66; font-style: italic;">Click to view →</p>
+    </div>
 
-            <div class="dashboard-card">
-                <h3><span class="dashboard-card-icon">🔤</span> Spelling Mistakes</h3>
-                <div class="stat-number" id="stat-spelling-incorrect">0</div>
-                <p style="color: #666;">Words to Practice</p>
-            </div>
-        </div>
-
+    <div class="dashboard-card" onclick="navigateTo('spelling-incorrect')" style="cursor: pointer; transition: all 0.3s;">
+        <h3><span class="dashboard-card-icon">🔤</span> Spelling Mistakes</h3>
+        <div class="stat-number" id="stat-spelling-incorrect">0</div>
+        <p style="color: #666;">Words to Practice</p>
+        <p style="margin-top: 10px; font-size: 0.9rem; color: #0d3b66; font-style: italic;">Click to view →</p>
+    </div>
+</div>
         <div class="profile-section">
             <div class="profile-header">
                 <div class="profile-avatar-large" id="dashboard-avatar">S</div>
@@ -2357,15 +2393,28 @@ function closeAuthModal() {
 
 function switchAuthTab(tab) {
     document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
-    document.querySelectorAll('.auth-form').forEach(f => f.classList.remove('active'));
+    document.querySelectorAll('.auth-form').forEach(f => {
+        f.classList.remove('active');
+        f.style.display = 'none'; // Force hide all forms
+    });
     
     if (tab === 'signin') {
         document.querySelector('.auth-tab:first-child').classList.add('active');
         document.getElementById('signin-form').classList.add('active');
+        document.getElementById('signin-form').style.display = 'block';
+        
+        // Hide all signup forms
+        document.getElementById('signup-selection').style.display = 'none';
+        document.getElementById('signup-student-form').style.display = 'none';
+        document.getElementById('signup-coach-form').style.display = 'none';
+        document.getElementById('signup-organization-form').style.display = 'none';
     } else {
         document.querySelector('.auth-tab:last-child').classList.add('active');
         document.getElementById('signup-selection').classList.add('active');
         document.getElementById('signup-selection').style.display = 'block';
+        
+        // Hide signin form
+        document.getElementById('signin-form').style.display = 'none';
     }
 }
 
