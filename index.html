@@ -3159,9 +3159,11 @@ function displaySpellingFavorites() {
                 <div class="favorite-card">
                     <button class="delete-btn" onclick="removeSpellingFavorite('${fav.id}')">×</button>
                     <h3 style="color: #0d3b66; margin-bottom: 10px;">📝 ${fav.word}</h3>
-                    ${fav.userAnswer ? `
-                        <p style="color: #666; margin: 5px 0;"><strong>Your answer:</strong> ${fav.userAnswer}</p>
-                    ` : ''}
+                    ${fav.userAnswer && fav.userAnswer !== '' ? `
+                    <p style="color: #666; margin: 5px 0;"><strong>Your answer:</strong> ${fav.userAnswer}</p>
+                     ` : `
+                    <p style="color: #666; margin: 5px 0; font-style: italic;">Added for practice</p>
+                    `}
                     <p style="color: ${fav.wasCorrect ? '#28a745' : '#dc3545'}; margin-top: 10px; font-weight: bold;">
                         ${fav.wasCorrect ? '✅ Spelled Correctly' : '❌ Needs Practice'}
                     </p>
